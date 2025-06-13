@@ -1,0 +1,187 @@
+# Prompt MCP Server for Amazon Q
+
+A single-file Model Context Protocol (MCP) server for Amazon Q Developer CLI that manages prompt files (*.md) from local directories.
+
+## Features
+
+- **Prompt Discovery**: Lists all `*.md` files from configured directories
+- **Default Directory**: `~/.aws/amazonq/prompts` (created automatically)
+- **Custom Directories**: Override with `PROMPTS_PATH` environment variable (PATH-like format)
+- **Variable Substitution**: Supports `{variable}` placeholders in prompts
+- **Cross-Platform**: Works on Unix/Linux/macOS (Windows compatible)
+- **Error Handling**: Comprehensive error handling and logging
+- **No Dependencies**: Pure Python 3.6+ implementation
+
+## Installation & Usage
+
+### Quick Start with uvx (Recommended)
+
+```bash
+# Install and run directly (after publishing to PyPI)
+uvx prompt-mcp-server
+
+# Or install from local build
+pyproject-build
+uvx --from ./dist/prompt_mcp_server-2.0.0-py3-none-any.whl prompt-mcp-server
+```
+
+### Direct Usage
+```bash
+# Run the server directly
+python3 prompt_mcp_server.py
+
+# With custom prompt directories
+PROMPTS_PATH="./my-prompts:~/.aws/amazonq/prompts" python3 prompt_mcp_server.py
+```
+
+### Amazon Q Integration
+```bash
+# The workspace is configured to use uvx with the built package
+q mcp list                    # Verify configuration (should show: prompt-server uvx)
+q chat                        # Start Amazon Q CLI
+/prompts                      # List available prompts
+@debug_code                   # Use a prompt
+```
+
+**Configuration files:**
+- `.amazonq/mcp.json` - Uses local built package
+- `.amazonq/mcp-published.json` - For published package (copy to `mcp.json` after publishing)
+
+### Building and Testing
+
+For detailed uvx usage instructions, see [UVX_INSTRUCTIONS.md](./UVX_INSTRUCTIONS.md).
+
+```bash
+# Build package
+pyproject-build
+
+# Test with uvx
+echo '{"jsonrpc": "2.0", "id": 1, "method": "initialize"}' | uvx --from ./dist/prompt_mcp_server-2.0.0-py3-none-any.whl prompt-mcp-server
+```
+
+## Configuration
+
+### Environment Variables
+- `PROMPTS_PATH`: Colon-separated list of directories (Unix) or semicolon-separated (Windows)
+- Default: `~/.aws/amazonq/prompts`
+
+### Workspace Configuration
+The `.amazonq/mcp.json` file configures Amazon Q to use this server:
+```json
+{
+  "mcpServers": {
+    "prompt-server": {
+      "command": "python3",
+      "args": ["prompt_mcp_server.py"],
+      "timeout": 10000
+    }
+  }
+}
+```
+
+## Testing
+
+The project includes comprehensive unit and functional tests:
+
+### Run All Tests
+```bash
+# Run both unit and functional tests
+python3 tests/run_all_tests.py
+
+# Run only unit tests
+python3 tests/run_all_tests.py --unit-only
+
+# Run only functional tests
+python3 tests/run_all_tests.py --functional-only
+```
+
+### Individual Test Suites
+```bash
+# Unit tests (31 tests)
+python3 tests/test_prompt_mcp_server.py
+
+# Functional tests (14 tests)
+python3 tests/test_functional.py
+```
+
+### Test Coverage
+- **Unit Tests**: 31 tests covering all server components
+- **Functional Tests**: 14 end-to-end integration tests
+- **Total Coverage**: 45 comprehensive tests
+
+## Creating Prompts
+
+### Simple Prompt
+Create `~/.aws/amazonq/prompts/debug_code.md`:
+```markdown
+# Debug Code Issues
+Help me debug code by identifying issues and suggesting fixes.
+```
+
+### Parameterized Prompt
+Create `~/.aws/amazonq/prompts/create_function.md`:
+```markdown
+# Create {language} Function
+Create a {language} function named {function_name} that {description}.
+
+Requirements:
+- Follow {language} best practices
+- Include error handling
+- Add comprehensive tests
+```
+
+## Usage Examples
+
+### List Available Prompts
+```bash
+echo '{"jsonrpc": "2.0", "id": 1, "method": "prompts/list"}' | python3 prompt_mcp_server.py
+```
+
+### Get a Prompt with Variables
+```bash
+echo '{"jsonrpc": "2.0", "id": 2, "method": "prompts/get", "params": {"name": "create_function", "arguments": {"language": "Python", "function_name": "calculate", "description": "adds two numbers"}}}' | python3 prompt_mcp_server.py
+```
+
+## Requirements
+
+- Python 3.6+
+- No external dependencies
+- Cross-platform support
+
+## Error Handling
+
+The server includes comprehensive error handling:
+- File permission validation
+- File size limits (1MB max)
+- Unicode encoding support (UTF-8 with latin-1 fallback)
+- Directory access validation
+- Graceful fallback to default directories
+- Detailed logging to stderr
+
+## Testing
+
+All core features have been tested:
+- ✅ MCP protocol compliance (initialize, prompts/list, prompts/get)
+- ✅ Prompt discovery and variable extraction
+- ✅ PROMPTS_PATH environment variable support
+- ✅ Cross-platform path handling
+- ✅ Error handling and edge cases
+- ✅ Amazon Q CLI integration
+
+## Architecture
+
+This is a single-file implementation that:
+1. Reads JSON-RPC requests from stdin
+2. Scans configured directories for `*.md` files
+3. Extracts variables using regex (`{variable}` pattern)
+4. Substitutes variables in prompt content
+5. Returns responses via stdout
+6. Logs to stderr
+
+## Version
+
+**2.0.0** - Single-file MCP server implementation
+
+---
+
+For more information about the Model Context Protocol, see the [MCP specification](https://spec.modelcontextprotocol.io/).

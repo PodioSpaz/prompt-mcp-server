@@ -1,0 +1,68 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "prompt-mcp-server"
+version = "2.0.0"
+description = "MCP server for Amazon Q Developer CLI that manages prompt files"
+readme = "README.md"
+license = {text = "MIT"}
+authors = [
+    {name = "Amazon Q Developer CLI Team"},
+]
+keywords = ["mcp", "amazon-q", "prompts", "cli", "ai", "model-context-protocol"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.7",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development",
+    "Topic :: Utilities",
+    "Topic :: Communications",
+    "Environment :: Console",
+]
+requires-python = ">=3.6"
+dependencies = []
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21.0",
+]
+test = [
+    "pytest>=7.0",
+    "pytest-asyncio>=0.21.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/amazon-q-developer/prompt-mcp-server"
+Repository = "https://github.com/amazon-q-developer/prompt-mcp-server"
+Issues = "https://github.com/amazon-q-developer/prompt-mcp-server/issues"
+Documentation = "https://github.com/amazon-q-developer/prompt-mcp-server#readme"
+Changelog = "https://github.com/amazon-q-developer/prompt-mcp-server/releases"
+
+[project.scripts]
+prompt-mcp-server = "prompt_mcp_server:main_sync"
+
+[tool.hatch.build.targets.wheel]
+include = [
+    "prompt_mcp_server.py",
+    "README.md",
+    "LICENSE",
+]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "prompt_mcp_server.py",
+    "README.md",
+    "LICENSE",
+    "pyproject.toml",
+]

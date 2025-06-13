@@ -1,0 +1,8 @@
+include prompt_mcp_server.py
+include README.md
+include LICENSE
+include pyproject.toml
+recursive-exclude tests *
+recursive-exclude .amazonq *
+exclude scratchboard.md
+exclude .gitignore

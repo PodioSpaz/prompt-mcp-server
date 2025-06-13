@@ -1,0 +1,31 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Logs
+*.log
+mcp-server.log
+
+# Amazon Q CLI history (large file)
+q-history.json
+
+# Amazon Q Developer CLI directory
+amazon-q-developer-cli/
+
+# Temporary files
+*.tmp
+*.temp
+temp/
+
+# Test artifacts
+.pytest_cache/
+.coverage
+
+# IDE
+.vscode/
+.DS_Store
+
+# Backup files
+*.backup
+*.bak

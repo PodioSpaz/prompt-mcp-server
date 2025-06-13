@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "prompt-server": {
+      "command": "uvx",
+      "args": ["prompt-mcp-server"],
+      "timeout": 10000
+    }
+  }
+}
