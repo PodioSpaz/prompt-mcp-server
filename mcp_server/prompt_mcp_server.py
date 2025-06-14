@@ -23,7 +23,7 @@ Environment Variables:
     PROMPTS_PATH - Colon-separated list of directories to search for prompts
                    Default: ~/.aws/amazonq/prompts
 
-Version: 2.0.1
+Version: 2.0.2
 Author: Amazon Q Developer CLI Team
 """
 
@@ -49,7 +49,7 @@ class PromptMCPServer:
     """Single-file MCP server for prompt management"""
     
     def __init__(self):
-        self.version = "2.0.1"
+        self.version = "2.0.2"
         self.name = "prompt-mcp-server"
         self.prompt_directories = self._get_prompt_directories()
         self.prompts_cache = {}
