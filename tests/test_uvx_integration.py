@@ -253,7 +253,8 @@ class TestUVXProcessLifecycle(TestUVXIntegration):
                 try:
                     process.kill()
                     process.wait(timeout=1)
-                except:
+                except (ProcessLookupError, subprocess.TimeoutExpired):
+                    # Process already terminated or timeout during cleanup
                     pass
     
     def test_error_handling_in_long_running_mode(self):
@@ -403,7 +404,11 @@ def run_uvx_tests():
     """Run UVX integration tests"""
     # Check if uvx is available
     try:
-        subprocess.run(["uvx", "--version"], capture_output=True, check=True)
+        import shutil
+        uvx_path = shutil.which("uvx")
+        if not uvx_path:
+            raise FileNotFoundError("uvx not found in PATH")
+        subprocess.run([uvx_path, "--version"], capture_output=True, check=True)
     except (subprocess.CalledProcessError, FileNotFoundError):
         print("❌ uvx not available. Install with: brew install pipx && pipx install uv")
         return False

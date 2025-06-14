@@ -50,10 +50,22 @@ def check_prerequisites():
         "uvx": "brew install pipx && pipx install uv"
     }
     
+    print("🔍 Checking prerequisites...")
+    
+    tools = {
+        "pyproject-build": "pipx install build",
+        "twine": "pipx install twine",
+        "uvx": "brew install pipx && pipx install uv"
+    }
+    
     missing = []
     for tool, install_cmd in tools.items():
         try:
-            subprocess.run([tool, "--version"], capture_output=True, check=True)
+            import shutil
+            tool_path = shutil.which(tool)
+            if not tool_path:
+                raise FileNotFoundError(f"{tool} not found in PATH")
+            subprocess.run([tool_path, "--version"], capture_output=True, check=True)
             print(f"✅ {tool} is available")
         except (subprocess.CalledProcessError, FileNotFoundError):
             print(f"❌ {tool} not found. Install with: {install_cmd}")
@@ -103,9 +115,16 @@ def test_package():
     print("🔄 Testing basic functionality...")
     
     try:
+        # Find uvx executable
+        import shutil
+        uvx_path = shutil.which("uvx")
+        if not uvx_path:
+            print("⚠️  uvx not found in PATH, skipping package test")
+            return True
+            
         # Test the package by running it directly
         test_process = subprocess.Popen(
-            ["uvx", "--from", f"./{wheel_path}", "prompt-mcp-server"],
+            [uvx_path, "--from", f"./{wheel_path}", "prompt-mcp-server"],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
