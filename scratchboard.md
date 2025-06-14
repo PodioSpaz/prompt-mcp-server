@@ -82,7 +82,7 @@
 
 **Publishing Tools:**
 - ✅ `UVX_INSTRUCTIONS.md` - Comprehensive uvx usage guide
-- ✅ `publish.py` - Automated publishing script
+- ✅ `tools/publish.py` - Automated publishing script
 - ✅ Package building - `pyproject-build` ready
 - ✅ Distribution files - Wheel and source distribution
 
@@ -123,8 +123,8 @@ q chat → /prompts → @debug_code
 echo '{"jsonrpc": "2.0", "id": 1, "method": "initialize"}' | uvx --from ./dist/prompt_mcp_server-2.0.0-py3-none-any.whl prompt-mcp-server
 
 # Publish when ready
-python3 publish.py --testpypi  # Test publishing
-python3 publish.py --pypi      # Production publishing
+python3 tools/publish.py --testpypi  # Test publishing
+python3 tools/publish.py --pypi      # Production publishing
 ```
 
 ### 📋 **Final Project Status**
@@ -148,7 +148,9 @@ python3 publish.py --pypi      # Production publishing
 │   └── mcp-published.json         # Published package (uvx only)
 ├── tests/                         # Comprehensive test suite
 ├── UVX_INSTRUCTIONS.md            # Complete uvx usage guide
-├── publish.py                     # Publishing automation
+├── tools/
+│   ├── publish.py                 # Publishing automation
+│   └── README.md                  # Tools documentation
 └── README.md                      # Project documentation
 ```
 

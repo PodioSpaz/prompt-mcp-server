@@ -28,10 +28,10 @@ uvx --from ./dist/prompt_mcp_server-2.0.0-py3-none-any.whl prompt-mcp-server
 ### Direct Usage
 ```bash
 # Run the server directly
-python3 prompt_mcp_server.py
+python3 mcp_server/prompt_mcp_server.py
 
 # With custom prompt directories
-PROMPTS_PATH="./my-prompts:~/.aws/amazonq/prompts" python3 prompt_mcp_server.py
+PROMPTS_PATH="./my-prompts:~/.aws/amazonq/prompts" python3 mcp_server/prompt_mcp_server.py
 ```
 
 ### Amazon Q Integration
@@ -44,8 +44,9 @@ q chat                        # Start Amazon Q CLI
 ```
 
 **Configuration files:**
-- `.amazonq/mcp.json` - Uses local built package
-- `.amazonq/mcp-published.json` - For published package (copy to `mcp.json` after publishing)
+- `.amazonq/mcp.json` - Uses local development path
+- `tests/.amazonq/mcp.json` - Uses local built package
+- `tests/.amazonq/mcp-published.json` - For published package (copy to `mcp.json` after publishing)
 
 ### Building and Testing
 
@@ -72,7 +73,7 @@ The `.amazonq/mcp.json` file configures Amazon Q to use this server:
   "mcpServers": {
     "prompt-server": {
       "command": "python3",
-      "args": ["prompt_mcp_server.py"],
+      "args": ["mcp_server/prompt_mcp_server.py"],
       "timeout": 10000
     }
   }
@@ -102,12 +103,21 @@ python3 tests/test_prompt_mcp_server.py
 
 # Functional tests (14 tests)
 python3 tests/test_functional.py
+
+# UVX integration tests (8 tests)
+python3 tests/test_uvx_integration.py
 ```
+
+### Test Results
+- **Current Status**: ✅ All 53 tests passing (100% success rate)
+- **Detailed Results**: See `tests/results/` directory for comprehensive reports
+- **Performance**: Complete test suite runs in ~10.5 seconds
 
 ### Test Coverage
 - **Unit Tests**: 31 tests covering all server components
 - **Functional Tests**: 14 end-to-end integration tests
-- **Total Coverage**: 45 comprehensive tests
+- **UVX Integration**: 8 tests for package execution scenarios
+- **Total Coverage**: 53 comprehensive tests
 
 ## Creating Prompts
 
@@ -134,12 +144,12 @@ Requirements:
 
 ### List Available Prompts
 ```bash
-echo '{"jsonrpc": "2.0", "id": 1, "method": "prompts/list"}' | python3 prompt_mcp_server.py
+echo '{"jsonrpc": "2.0", "id": 1, "method": "prompts/list"}' | python3 mcp_server/prompt_mcp_server.py
 ```
 
 ### Get a Prompt with Variables
 ```bash
-echo '{"jsonrpc": "2.0", "id": 2, "method": "prompts/get", "params": {"name": "create_function", "arguments": {"language": "Python", "function_name": "calculate", "description": "adds two numbers"}}}' | python3 prompt_mcp_server.py
+echo '{"jsonrpc": "2.0", "id": 2, "method": "prompts/get", "params": {"name": "create_function", "arguments": {"language": "Python", "function_name": "calculate", "description": "adds two numbers"}}}' | python3 mcp_server/prompt_mcp_server.py
 ```
 
 ## Requirements
@@ -167,6 +177,33 @@ All core features have been tested:
 - ✅ Cross-platform path handling
 - ✅ Error handling and edge cases
 - ✅ Amazon Q CLI integration
+
+## Project Structure
+
+```
+mcp-prompts-local/
+├── mcp_server/                    # Main package
+│   ├── __init__.py               # Package initialization
+│   └── prompt_mcp_server.py      # MCP server implementation
+├── tools/                        # Development tools
+│   ├── publish.py                # Automated publishing script
+│   └── README.md                 # Tools documentation
+├── tests/                        # Test suite
+│   ├── test_prompt_mcp_server.py # Unit tests (31 tests)
+│   ├── test_functional.py        # Functional tests (14 tests)
+│   ├── test_uvx_integration.py   # UVX integration tests (8 tests)
+│   ├── results/                  # Test execution results
+│   │   ├── FULL_TEST_RESULTS.md  # Initial test results
+│   │   ├── FINAL_TEST_RESULTS.md # Final test results (100% success)
+│   │   └── README.md             # Test results documentation
+│   └── .amazonq/                 # Test configurations
+├── .amazonq/                     # Workspace configuration
+│   └── mcp.json                  # Development MCP config
+├── dist/                         # Built packages
+├── pyproject.toml                # Package configuration
+├── README.md                     # This file
+└── LICENSE                       # MIT license
+```
 
 ## Architecture
 

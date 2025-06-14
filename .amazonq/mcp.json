@@ -1,8 +1,8 @@
 {
   "mcpServers": {
     "prompt-server": {
-      "command": "uvx",
-      "args": ["--from", "./dist/prompt_mcp_server-2.0.0-py3-none-any.whl", "prompt-mcp-server"],
+      "command": "python3",
+      "args": ["mcp_server/prompt_mcp_server.py"],
       "timeout": 10000
     }
   }

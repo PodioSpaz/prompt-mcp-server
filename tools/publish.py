@@ -5,10 +5,10 @@ Publishing Script for Prompt MCP Server
 Automates the build and publish process for the package.
 
 Usage:
-    python3 publish.py --build-only    # Build package only
-    python3 publish.py --test          # Build and test with uvx
-    python3 publish.py --testpypi      # Publish to TestPyPI
-    python3 publish.py --pypi          # Publish to PyPI
+    python3 tools/publish.py --build-only    # Build package only
+    python3 tools/publish.py --test          # Build and test with uvx
+    python3 tools/publish.py --testpypi      # Publish to TestPyPI
+    python3 tools/publish.py --pypi          # Publish to PyPI
 """
 
 import subprocess
@@ -179,9 +179,9 @@ def main():
     if not any([args.build_only, args.test, args.testpypi, args.pypi]):
         print("\n✅ Build completed successfully!")
         print("📋 Next steps:")
-        print("   python3 publish.py --test      # Test with uvx")
-        print("   python3 publish.py --testpypi  # Publish to TestPyPI")
-        print("   python3 publish.py --pypi      # Publish to PyPI")
+        print("   python3 tools/publish.py --test      # Test with uvx")
+        print("   python3 tools/publish.py --testpypi  # Publish to TestPyPI")
+        print("   python3 tools/publish.py --pypi      # Publish to PyPI")
     
     return True
 

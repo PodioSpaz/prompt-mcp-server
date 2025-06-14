@@ -8,6 +8,19 @@ This test suite provides comprehensive coverage of the Prompt MCP Server with 45
 - **31 Unit Tests** - Testing individual components and methods
 - **14 Functional Tests** - End-to-end integration testing
 
+## Test Results
+
+Comprehensive test execution results are stored in the `results/` directory:
+
+- **`results/FULL_TEST_RESULTS.md`**: Initial test results (98.1% success)
+- **`results/FINAL_TEST_RESULTS.md`**: Final test results (100% success)
+- **`results/README.md`**: Detailed documentation of all test results
+
+### Current Status: ✅ All Tests Passing (53/53)
+- Unit Tests: 31/31 ✅
+- Functional Tests: 14/14 ✅  
+- UVX Integration Tests: 8/8 ✅
+
 ## Test Structure
 
 ```
@@ -416,5 +429,5 @@ The test suite is designed for CI/CD integration:
 ---
 
 **Last Updated:** 2025-06-13  
-**Test Suite Version:** 2.0.0  
+**Test Suite Version:** 2.0.1  
 **Maintainer:** Amazon Q Developer CLI Team

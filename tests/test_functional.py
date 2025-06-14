@@ -52,7 +52,7 @@ class TestFunctionalMCPServer(unittest.TestCase):
         self.create_functional_test_prompts()
         
         # Path to the server script
-        self.server_script = Path(__file__).parent.parent / "prompt_mcp_server.py"
+        self.server_script = Path(__file__).parent.parent / "mcp_server" / "prompt_mcp_server.py"
         
         # Suppress logging during tests
         logging.getLogger('prompt_mcp_server').setLevel(logging.CRITICAL)
@@ -715,7 +715,7 @@ class TestAmazonQIntegration(TestFunctionalMCPServer):
                 self.assertIn("prompt-mcp-server", server_config["args"])
             else:
                 # Legacy python3 configuration
-                self.assertEqual(server_config["args"][0], "prompt_mcp_server.py")
+                self.assertEqual(server_config["args"][0], "mcp_server/prompt_mcp_server.py")
         else:
             self.skipTest("Workspace configuration not found")
     

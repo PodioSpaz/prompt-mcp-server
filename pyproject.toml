@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "prompt-mcp-server"
-version = "2.0.0"
+version = "2.0.1"
 description = "MCP server for Amazon Q Developer CLI that manages prompt files"
 readme = "README.md"
 license = {text = "MIT"}
@@ -50,18 +50,18 @@ Documentation = "https://github.com/amazon-q-developer/prompt-mcp-server#readme"
 Changelog = "https://github.com/amazon-q-developer/prompt-mcp-server/releases"
 
 [project.scripts]
-prompt-mcp-server = "prompt_mcp_server:main_sync"
+prompt-mcp-server = "mcp_server.prompt_mcp_server:main_sync"
 
 [tool.hatch.build.targets.wheel]
 include = [
-    "prompt_mcp_server.py",
+    "mcp_server/",
     "README.md",
     "LICENSE",
 ]
 
 [tool.hatch.build.targets.sdist]
 include = [
-    "prompt_mcp_server.py",
+    "mcp_server/",
     "README.md",
     "LICENSE",
     "pyproject.toml",
