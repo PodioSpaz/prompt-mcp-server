@@ -8,12 +8,13 @@ This directory contains the test configuration and tools for testing the MCP ser
 This is the MCP configuration file that Amazon Q CLI will use when running from the `tests/` directory.
 
 **Current Configuration:**
+
 ```json
 {
   "mcpServers": {
     "prompt-server": {
-      "command": "python3",
-      "args": ["../mcp_server/prompt_mcp_server.py"],
+      "command": "uvx",
+      "args": ["--from", "../dist/prompt_mcp_server-2.0.2-py3-none-any.whl", "prompt-mcp-server"],
       "timeout": 10000
     }
   }
@@ -21,8 +22,9 @@ This is the MCP configuration file that Amazon Q CLI will use when running from 
 ```
 
 This configuration:
-- Uses direct Python execution for testing latest changes
-- Points to the server file relative to the tests directory
+
+- Uses UVX with the built wheel package for testing
+- Points to the server wheel file relative to the tests directory
 - Sets a 10-second timeout for server responses
 
 ## Testing the MCP Server
@@ -45,7 +47,7 @@ python3 tests/test_mcp_from_tests_dir.py
 This test verifies:
 - ✅ Server initialization
 - ✅ Tools/list (returns empty array)
-- ✅ Resources/list (returns empty array)  
+- ✅ Resources/list (returns empty array)
 - ✅ Prompts/list (returns available prompts)
 - ✅ Prompts/get (retrieves specific prompts)
 
@@ -197,6 +199,6 @@ The MCP server is working correctly when:
 
 ---
 
-**Last Updated:** 2025-06-15  
-**Configuration Version:** Direct Python execution  
+**Last Updated:** 2025-06-15
+**Configuration Version:** Direct Python execution
 **Server Version:** 2.0.1

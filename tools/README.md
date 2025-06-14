@@ -55,7 +55,7 @@ The script reads configuration from:
    ```bash
    python3 tests/run_all_tests.py
    ```
-3. **Build Package**: 
+3. **Build Package**:
    ```bash
    pyproject-build
    ```
@@ -134,7 +134,7 @@ def main():
     parser = argparse.ArgumentParser(description="Tool description")
     parser.add_argument("--option", help="Option description")
     args = parser.parse_args()
-    
+
     # Tool implementation
     print("Tool executed successfully!")
 

@@ -10,7 +10,7 @@ A single-file Model Context Protocol (MCP) server for Amazon Q Developer CLI tha
 - **Variable Substitution**: Supports `{variable}` placeholders in prompts
 - **Cross-Platform**: Works on Unix/Linux/macOS (Windows compatible)
 - **Error Handling**: Comprehensive error handling and logging
-- **No Dependencies**: Pure Python 3.6+ implementation
+- **No Dependencies**: Pure Python 3.8+ implementation
 
 ## Installation & Usage
 
@@ -22,10 +22,11 @@ uvx prompt-mcp-server
 
 # Or install from local build
 pyproject-build
-uvx --from ./dist/prompt_mcp_server-2.0.0-py3-none-any.whl prompt-mcp-server
+uvx --from ./dist/prompt_mcp_server-2.0.2-py3-none-any.whl prompt-mcp-server
 ```
 
 ### Direct Usage
+
 ```bash
 # Run the server directly
 python3 mcp_server/prompt_mcp_server.py
@@ -35,6 +36,7 @@ PROMPTS_PATH="./my-prompts:~/.aws/amazonq/prompts" python3 mcp_server/prompt_mcp
 ```
 
 ### Amazon Q Integration
+
 ```bash
 # The workspace is configured to use uvx with the built package
 q mcp list                    # Verify configuration (should show: prompt-server uvx)
@@ -44,13 +46,12 @@ q chat                        # Start Amazon Q CLI
 ```
 
 **Configuration files:**
+
 - `.amazonq/mcp.json` - Uses local development path
 - `tests/.amazonq/mcp.json` - Uses local built package
 - `tests/.amazonq/mcp-published.json` - For published package (copy to `mcp.json` after publishing)
 
 ### Building and Testing
-
-For detailed uvx usage instructions, see [UVX_INSTRUCTIONS.md](./UVX_INSTRUCTIONS.md).
 
 ```bash
 # Build package

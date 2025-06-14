@@ -20,7 +20,7 @@ Comprehensive test execution results are stored in the `results/` directory:
 
 ### Current Status: ✅ All Tests Passing
 - Unit Tests: 31/31 ✅
-- Functional Tests: 14/14 ✅  
+- Functional Tests: 14/14 ✅
 - UVX Integration Tests: 8/8 ✅
 - MCP Integration Tests: 4/4 ✅
 
@@ -223,8 +223,8 @@ The `.amazonq/mcp.json` file configures the MCP server for Amazon Q CLI testing:
 
 ---
 
-**Last Updated**: 2025-06-15  
-**Test Suite Version**: 2.0.2  
+**Last Updated**: 2025-06-15
+**Test Suite Version**: 2.0.2
 **Total Test Coverage**: Unit + Functional + Integration + MCP Protocol
 python3 tests/run_all_tests.py --functional-only
 
@@ -475,9 +475,9 @@ Tests Amazon Q CLI integration.
 
 ### Latest Test Run Results
 
-**Date:** 2025-06-13  
-**Environment:** macOS (Darwin)  
-**Python Version:** 3.13.4  
+**Date:** 2025-06-13
+**Environment:** macOS (Darwin)
+**Python Version:** 3.13.4
 
 #### Summary
 - **Total Tests:** 45
@@ -606,6 +606,6 @@ The test suite is designed for CI/CD integration:
 
 ---
 
-**Last Updated:** 2025-06-13  
-**Test Suite Version:** 2.0.1  
+**Last Updated:** 2025-06-13
+**Test Suite Version:** 2.0.1
 **Maintainer:** Amazon Q Developer CLI Team
