@@ -367,6 +367,57 @@ class PromptMCPServer:
                 }
             }
     
+    def run_sync(self):
+        """Run the MCP server synchronously"""
+        logger.info(f"Starting {self.name} v{self.version}")
+        
+        try:
+            while True:
+                try:
+                    # Read JSON-RPC request from stdin
+                    line = sys.stdin.readline()
+                    
+                    # Check for EOF
+                    if not line:
+                        logger.info("Received EOF, shutting down")
+                        break
+                    
+                    line = line.strip()
+                    if not line:
+                        continue
+                    
+                    try:
+                        request = json.loads(line)
+                        
+                        # Handle request synchronously by running async handler
+                        response = asyncio.run(self.handle_request(request))
+                        
+                        # Write response to stdout
+                        print(json.dumps(response), flush=True)
+                        
+                    except json.JSONDecodeError as e:
+                        logger.error(f"Invalid JSON received: {e}")
+                        error_response = {
+                            "jsonrpc": "2.0",
+                            "id": None,
+                            "error": {
+                                "code": -32700,
+                                "message": "Parse error"
+                            }
+                        }
+                        print(json.dumps(error_response), flush=True)
+                        
+                except EOFError:
+                    logger.info("Received EOFError, shutting down")
+                    break
+                
+        except KeyboardInterrupt:
+            logger.info("Server interrupted by user")
+        except Exception as e:
+            logger.error(f"Server error: {e}")
+        finally:
+            logger.info("Enhanced Prompt MCP Server stopped")
+
     async def run(self):
         """Run the MCP server"""
         logger.info(f"Starting {self.name} v{self.version}")
@@ -415,8 +466,10 @@ async def main():
     await server.run()
 
 def main_sync():
-    """Synchronous entry point for uvx"""
-    asyncio.run(main())
+    """Synchronous entry point for uvx and MCP clients"""
+    server = PromptMCPServer()
+    server.run_sync()
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    # Use synchronous version for better MCP client compatibility
+    main_sync()
