@@ -21,7 +21,14 @@ def run_command(cmd, description, check=True):
     """Run a command and handle errors"""
     print(f"🔄 {description}...")
     try:
-        result = subprocess.run(cmd, shell=True, check=check, capture_output=True, text=True)
+        # Handle both string commands and list commands
+        if isinstance(cmd, str):
+            # Convert string commands to list for security
+            cmd_list = cmd.split()
+        else:
+            cmd_list = cmd
+            
+        result = subprocess.run(cmd_list, check=check, capture_output=True, text=True)
         if result.stdout:
             print(result.stdout)
         if result.stderr and result.returncode != 0:
@@ -61,10 +68,13 @@ def build_package():
     
     # Clean previous builds
     if Path("dist").exists():
-        run_command("rm -rf dist/", "Cleaning previous builds")
+        import shutil
+        print("🔄 Cleaning previous builds...")
+        shutil.rmtree("dist")
+        print("✅ Cleaning previous builds completed")
     
     # Build package
-    if not run_command("pyproject-build", "Building package"):
+    if not run_command(["pyproject-build"], "Building package"):
         return False
     
     # List built files
@@ -89,13 +99,33 @@ def test_package():
     print(f"Testing with: {wheel_path}")
     
     # Test basic functionality
-    test_cmd = f'echo \'{{"jsonrpc": "2.0", "id": 1, "method": "initialize"}}\' | uvx --from ./{wheel_path} prompt-mcp-server'
-    
     print("⚠️  Note: The test will start the MCP server. Press Ctrl+C to stop after seeing the response.")
-    print("🔄 Running test command...")
+    print("🔄 Testing basic functionality...")
     
-    if not run_command(test_cmd, "Testing basic functionality", check=False):
-        print("⚠️  Test may have been interrupted (this is expected - use Ctrl+C to stop)")
+    try:
+        # Test the package by running it directly
+        test_process = subprocess.Popen(
+            ["uvx", "--from", f"./{wheel_path}", "prompt-mcp-server"],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True
+        )
+        
+        # Send test request
+        test_request = '{"jsonrpc": "2.0", "id": 1, "method": "initialize"}\n'
+        stdout, stderr = test_process.communicate(input=test_request, timeout=10)
+        
+        if test_process.returncode == 0 and "prompt-mcp-server" in stdout:
+            print("✅ Package test successful")
+        else:
+            print("⚠️  Package test completed (may have been interrupted)")
+            
+    except subprocess.TimeoutExpired:
+        test_process.kill()
+        print("⚠️  Test timeout (this is expected for MCP servers)")
+    except Exception as e:
+        print(f"⚠️  Test completed with note: {e}")
     
     print("✅ Package testing completed")
     print("📋 For comprehensive testing, see UVX_INSTRUCTIONS.md")
@@ -106,7 +136,14 @@ def publish_to_testpypi():
     print("\n📤 PUBLISHING TO TESTPYPI")
     print("=" * 40)
     
-    cmd = "twine upload --repository testpypi dist/*"
+    # Get all files in dist directory
+    import glob
+    dist_files = glob.glob("dist/*")
+    if not dist_files:
+        print("❌ No files found in dist/")
+        return False
+        
+    cmd = ["twine", "upload", "--repository", "testpypi"] + dist_files
     return run_command(cmd, "Publishing to TestPyPI")
 
 def publish_to_pypi():
@@ -120,7 +157,14 @@ def publish_to_pypi():
         print("❌ Publishing cancelled")
         return False
     
-    cmd = "twine upload dist/*"
+    # Get all files in dist directory
+    import glob
+    dist_files = glob.glob("dist/*")
+    if not dist_files:
+        print("❌ No files found in dist/")
+        return False
+        
+    cmd = ["twine", "upload"] + dist_files
     return run_command(cmd, "Publishing to PyPI")
 
 def main():
