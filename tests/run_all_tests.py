@@ -55,13 +55,32 @@ def run_uvx_tests():
         print(f"❌ UVX tests failed with exception: {e}")
         return False
 
+def run_mcp_integration_tests():
+    """Run MCP integration tests"""
+    print("🧪 RUNNING MCP INTEGRATION TESTS")
+    print("=" * 50)
+    
+    try:
+        # Import and run MCP integration tests
+        from test_mcp_integration import MCPIntegrationTester
+        tester = MCPIntegrationTester()
+        return tester.run_all_tests() == 0
+    except ImportError as e:
+        print(f"❌ Could not import MCP integration tests: {e}")
+        return False
+    except Exception as e:
+        print(f"❌ MCP integration tests failed with exception: {e}")
+        return False
+
 def main():
     """Main test runner"""
     parser = argparse.ArgumentParser(description="Run Prompt MCP Server tests")
     parser.add_argument("--unit-only", action="store_true", help="Run only unit tests")
     parser.add_argument("--functional-only", action="store_true", help="Run only functional tests")
     parser.add_argument("--uvx-only", action="store_true", help="Run only UVX integration tests")
+    parser.add_argument("--mcp-only", action="store_true", help="Run only MCP integration tests")
     parser.add_argument("--no-uvx", action="store_true", help="Skip UVX integration tests")
+    parser.add_argument("--no-mcp", action="store_true", help="Skip MCP integration tests")
     parser.add_argument("--verbose", action="store_true", help="Verbose output")
     
     args = parser.parse_args()
@@ -76,12 +95,16 @@ def main():
     results = {}
     
     # Determine which tests to run
-    run_unit = not (args.functional_only or args.uvx_only)
-    run_functional = not (args.unit_only or args.uvx_only)
-    run_uvx = not (args.unit_only or args.functional_only or args.no_uvx)
+    run_unit = not (args.functional_only or args.uvx_only or args.mcp_only)
+    run_functional = not (args.unit_only or args.uvx_only or args.mcp_only)
+    run_uvx = not (args.unit_only or args.functional_only or args.mcp_only or args.no_uvx)
+    run_mcp = not (args.unit_only or args.functional_only or args.uvx_only or args.no_mcp)
     
     if args.uvx_only:
         run_uvx = True
+    
+    if args.mcp_only:
+        run_mcp = True
     
     # Run unit tests
     if run_unit:
@@ -107,6 +130,14 @@ def main():
             print(f"❌ UVX integration tests failed with exception: {e}")
             results['uvx'] = False
     
+    # Run MCP integration tests
+    if run_mcp:
+        try:
+            results['mcp'] = run_mcp_integration_tests()
+        except Exception as e:
+            print(f"❌ MCP integration tests failed with exception: {e}")
+            results['mcp'] = False
+    
     # Calculate total time
     end_time = time.time()
     total_time = end_time - start_time
@@ -127,6 +158,10 @@ def main():
     if 'uvx' in results:
         status = "✅ PASSED" if results['uvx'] else "❌ FAILED"
         print(f"UVX Integration:      {status}")
+    
+    if 'mcp' in results:
+        status = "✅ PASSED" if results['mcp'] else "❌ FAILED"
+        print(f"MCP Integration:      {status}")
     
     print(f"Total Time:           {total_time:.2f} seconds")
     print(f"Completed at:         {time.strftime('%Y-%m-%d %H:%M:%S')}")

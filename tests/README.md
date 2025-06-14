@@ -4,9 +4,11 @@ Comprehensive testing documentation for the Prompt MCP Server project.
 
 ## Overview
 
-This test suite provides comprehensive coverage of the Prompt MCP Server with 45 tests across two categories:
+This test suite provides comprehensive coverage of the Prompt MCP Server with multiple test categories:
 - **31 Unit Tests** - Testing individual components and methods
 - **14 Functional Tests** - End-to-end integration testing
+- **8 UVX Integration Tests** - Package distribution testing
+- **MCP Integration Tests** - Protocol compliance and connection testing
 
 ## Test Results
 
@@ -16,38 +18,214 @@ Comprehensive test execution results are stored in the `results/` directory:
 - **`results/FINAL_TEST_RESULTS.md`**: Final test results (100% success)
 - **`results/README.md`**: Detailed documentation of all test results
 
-### Current Status: ✅ All Tests Passing (53/53)
+### Current Status: ✅ All Tests Passing
 - Unit Tests: 31/31 ✅
 - Functional Tests: 14/14 ✅  
 - UVX Integration Tests: 8/8 ✅
+- MCP Integration Tests: 4/4 ✅
 
 ## Test Structure
 
 ```
 tests/
-├── README.md                    # This documentation
-├── run_all_tests.py            # Comprehensive test runner
-├── test_prompt_mcp_server.py   # Unit tests (31 tests)
-├── test_functional.py          # Functional tests (14 tests)
-└── test_prompts/               # Test prompt files
-    ├── create_function.md      # Parameterized prompt
-    ├── debug_code.md          # Simple prompt
-    ├── api_docs.md            # Complex prompt with special chars
-    └── large_prompt.md        # Performance testing prompt
+├── README.md                      # This documentation
+├── MCP_TESTING.md                # MCP-specific testing guide
+├── run_all_tests.py              # Comprehensive test runner
+├── test_prompt_mcp_server.py     # Unit tests (31 tests)
+├── test_functional.py            # Functional tests (14 tests)
+├── test_uvx_integration.py       # UVX package tests (8 tests)
+├── test_mcp_integration.py       # MCP integration tests (NEW)
+├── test_mcp_protocol.py          # MCP protocol compliance tests
+├── test_mcp_from_tests_dir.py    # Tests directory configuration tests
+├── test_prompts/                 # Test prompt files
+│   ├── create_function.md        # Parameterized prompt
+│   ├── debug_code.md            # Simple prompt
+│   ├── api_docs.md              # Complex prompt with special chars
+│   └── large_prompt.md          # Performance testing prompt
+├── results/                      # Test execution results
+└── .amazonq/                     # MCP configuration for testing
+    └── mcp.json                  # Amazon Q CLI test configuration
 ```
+
+## Test Categories
+
+### 1. Unit Tests (`test_prompt_mcp_server.py`)
+**Purpose**: Test individual components and methods in isolation
+- Server initialization and configuration
+- Directory management and prompt scanning
+- Variable substitution and caching
+- MCP protocol method handlers
+- Error handling and edge cases
+
+**Run**: `python3 tests/run_all_tests.py --unit-only`
+
+### 2. Functional Tests (`test_functional.py`)
+**Purpose**: End-to-end testing of complete workflows
+- Complete prompt processing workflows
+- File system integration
+- Error recovery scenarios
+- Performance characteristics
+
+**Run**: `python3 tests/run_all_tests.py --functional-only`
+
+### 3. UVX Integration Tests (`test_uvx_integration.py`)
+**Purpose**: Test package distribution and UVX execution
+- Wheel package installation and execution
+- Command-line interface testing
+- Package metadata validation
+- Cross-platform compatibility
+
+**Run**: `python3 tests/run_all_tests.py --uvx-only`
+
+### 4. MCP Integration Tests (`test_mcp_integration.py`) **NEW**
+**Purpose**: Comprehensive MCP protocol and integration testing
+- **Protocol Compliance**: Tests all MCP methods (initialize, tools/list, resources/list, prompts/list, prompts/get)
+- **Server Connection**: Persistent session testing with multiple requests
+- **Tests Directory**: Validates Amazon Q CLI configuration from tests/
+- **UVX Package**: Tests wheel package execution
+
+**Run**: `python3 tests/test_mcp_integration.py`
+
+### 5. MCP Protocol Tests (`test_mcp_protocol.py`)
+**Purpose**: Focused MCP protocol compliance validation
+- Individual method testing
+- Response format validation
+- Error handling verification
+
+**Run**: `python3 tests/test_mcp_protocol.py`
+
+### 6. Tests Directory Configuration (`test_mcp_from_tests_dir.py`)
+**Purpose**: Validate Amazon Q CLI integration from tests directory
+- Tests the exact configuration in `.amazonq/mcp.json`
+- Simulates Amazon Q CLI usage scenario
+- Validates relative path resolution
+
+**Run**: `python3 tests/test_mcp_from_tests_dir.py`
 
 ## Test Procedures
 
 ### Quick Test Execution
 
 ```bash
-# Run all tests (unit, functional, and uvx integration)
+# Run all tests (unit, functional, uvx, and mcp integration)
 python3 tests/run_all_tests.py
 
 # Run only unit tests
 python3 tests/run_all_tests.py --unit-only
 
 # Run only functional tests
+python3 tests/run_all_tests.py --functional-only
+
+# Run only UVX integration tests
+python3 tests/run_all_tests.py --uvx-only
+
+# Run comprehensive MCP integration tests
+python3 tests/test_mcp_integration.py
+
+# Run MCP protocol compliance tests
+python3 tests/test_mcp_protocol.py
+
+# Run tests directory configuration tests
+python3 tests/test_mcp_from_tests_dir.py
+```
+
+### Amazon Q CLI Testing
+
+```bash
+# Navigate to tests directory
+cd tests/
+
+# Run Amazon Q CLI (uses .amazonq/mcp.json configuration)
+q chat
+
+# Test MCP server availability
+> /tools
+```
+
+## MCP Testing Guide
+
+For detailed MCP testing procedures, see **[MCP_TESTING.md](MCP_TESTING.md)** which includes:
+- Configuration options and variants
+- Troubleshooting guide
+- Expected responses and success criteria
+- Amazon Q CLI integration testing
+
+## Test Configuration
+
+### Environment Variables
+- `PROMPTS_PATH`: Custom prompt directories (colon-separated)
+- `FASTMCP_LOG_LEVEL`: Logging level for MCP operations
+
+### Test Prompt Files
+Located in `test_prompts/` directory:
+- **create_function.md**: Tests variable substitution
+- **debug_code.md**: Simple prompt without variables
+- **api_docs.md**: Complex content with special characters
+- **large_prompt.md**: Performance testing (large content)
+
+### MCP Configuration
+The `.amazonq/mcp.json` file configures the MCP server for Amazon Q CLI testing:
+
+```json
+{
+  "mcpServers": {
+    "prompt-server": {
+      "command": "uvx",
+      "args": ["--from", "../dist/prompt_mcp_server-2.0.2-py3-none-any.whl", "prompt-mcp-server"],
+      "timeout": 10000
+    }
+  }
+}
+```
+
+## Test Results and Reporting
+
+### Automated Reporting
+- Test results are automatically saved to `results/` directory
+- Detailed logs include timing, success rates, and error details
+- Summary reports show overall project health
+
+### Manual Verification
+- MCP protocol compliance can be verified manually
+- Amazon Q CLI integration should be tested in real environment
+- Package distribution can be validated with UVX commands
+
+## Troubleshooting
+
+### Common Issues
+1. **MCP Server Loading**: Ensure all protocol methods are implemented
+2. **UVX Cache Issues**: Use version bumps or `--no-cache` flag
+3. **Path Resolution**: Verify relative paths from tests directory
+4. **Permission Errors**: Check file permissions on test prompt files
+
+### Debug Tools
+- **`debug_mcp_server.py`**: Enhanced logging version of MCP server
+- **Test logs**: Detailed execution logs in `results/` directory
+- **Manual testing**: Individual test scripts for focused debugging
+
+## Success Criteria
+
+### Unit Tests
+- All 31 unit tests must pass
+- 100% success rate required
+- No memory leaks or resource issues
+
+### Integration Tests
+- MCP protocol compliance verified
+- Amazon Q CLI integration working
+- UVX package execution successful
+- All test configurations validated
+
+### Performance
+- Prompt scanning completes within reasonable time
+- Memory usage remains stable
+- Caching improves response times
+
+---
+
+**Last Updated**: 2025-06-15  
+**Test Suite Version**: 2.0.2  
+**Total Test Coverage**: Unit + Functional + Integration + MCP Protocol
 python3 tests/run_all_tests.py --functional-only
 
 # Run only uvx integration tests
