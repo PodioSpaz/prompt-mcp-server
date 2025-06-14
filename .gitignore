@@ -124,6 +124,7 @@ celerybeat.pid
 .venv
 env/
 venv/
+*venv/
 ENV/
 env.bak/
 venv.bak/
@@ -237,18 +238,41 @@ amazon-q-developer-cli/
 
 # MCP server logs
 mcp-server.log
+*.log
 
 # Temporary files
 *.tmp
 *.temp
 temp/
+tmp/
 
 # Backup files
 *.backup
 *.bak
+*~
 
 # Development notes (if any)
 notes/
 scratch/
 TODO.md
 NOTES.md
+
+# Test outputs and artifacts
+test-results/
+test-output/
+.pytest_cache/
+
+# Local configuration files
+.env.local
+.env.*.local
+config.local.*
+
+# Editor swap files
+*.swp
+*.swo
+*~
+
+# Package manager lock files (uncomment if needed)
+# Pipfile.lock
+# poetry.lock
+# pdm.lock
