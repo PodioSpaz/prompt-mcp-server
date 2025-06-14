@@ -238,7 +238,9 @@ class PromptMCPServer:
                 "capabilities": {
                     "prompts": {
                         "listChanged": True
-                    }
+                    },
+                    "tools": {},
+                    "resources": {}
                 },
                 "serverInfo": {
                     "name": self.name,
@@ -347,8 +349,30 @@ class PromptMCPServer:
                 }
             }
     
+    async def handle_tools_list(self, request: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle MCP tools/list request"""
+        logger.info("Handling tools/list request")
+        return {
+            "jsonrpc": "2.0",
+            "id": request.get("id"),
+            "result": {
+                "tools": []  # We don't provide any tools, only prompts
+            }
+        }
+    
+    async def handle_resources_list(self, request: Dict[str, Any]) -> Dict[str, Any]:
+        """Handle MCP resources/list request"""
+        logger.info("Handling resources/list request")
+        return {
+            "jsonrpc": "2.0",
+            "id": request.get("id"),
+            "result": {
+                "resources": []  # We don't provide any resources
+            }
+        }
+    
     async def handle_request(self, request: Dict[str, Any]) -> Dict[str, Any]:
-        """Handle incoming MCP request"""
+        """Handle incoming MCP requests"""
         method = request.get("method")
         
         if method == "initialize":
@@ -357,6 +381,10 @@ class PromptMCPServer:
             return await self.handle_prompts_list(request)
         elif method == "prompts/get":
             return await self.handle_prompts_get(request)
+        elif method == "tools/list":
+            return await self.handle_tools_list(request)
+        elif method == "resources/list":
+            return await self.handle_resources_list(request)
         else:
             return {
                 "jsonrpc": "2.0",
@@ -371,13 +399,35 @@ class PromptMCPServer:
         """Run the MCP server synchronously"""
         logger.info(f"Starting {self.name} v{self.version}")
         
+        # Set up signal handlers for graceful shutdown
+        import signal
+        shutdown_requested = False
+        
+        def signal_handler(signum, frame):
+            nonlocal shutdown_requested
+            logger.info(f"Received signal {signum}, initiating graceful shutdown")
+            shutdown_requested = True
+        
+        signal.signal(signal.SIGTERM, signal_handler)
+        signal.signal(signal.SIGINT, signal_handler)
+        
         try:
-            while True:
+            # Make stdin non-blocking to handle client connection timing
+            import select
+            
+            while not shutdown_requested:
                 try:
+                    # Check if data is available on stdin with a timeout
+                    ready, _, _ = select.select([sys.stdin], [], [], 1.0)
+                    
+                    if not ready:
+                        # No data available, continue waiting
+                        continue
+                    
                     # Read JSON-RPC request from stdin
                     line = sys.stdin.readline()
                     
-                    # Check for EOF
+                    # Check for EOF or empty line
                     if not line:
                         logger.info("Received EOF, shutting down")
                         break
@@ -395,6 +445,9 @@ class PromptMCPServer:
                         # Write response to stdout
                         print(json.dumps(response), flush=True)
                         
+                        # For debugging: log the request/response
+                        logger.debug(f"Processed request: {request.get('method', 'unknown')}")
+                        
                     except json.JSONDecodeError as e:
                         logger.error(f"Invalid JSON received: {e}")
                         error_response = {
@@ -410,9 +463,14 @@ class PromptMCPServer:
                 except EOFError:
                     logger.info("Received EOFError, shutting down")
                     break
+                except KeyboardInterrupt:
+                    logger.info("Received KeyboardInterrupt, shutting down")
+                    break
+                except Exception as e:
+                    logger.error(f"Error in main loop: {e}")
+                    # Don't break on individual errors, keep server running
+                    continue
                 
-        except KeyboardInterrupt:
-            logger.info("Server interrupted by user")
         except Exception as e:
             logger.error(f"Server error: {e}")
         finally:
