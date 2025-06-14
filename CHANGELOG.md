@@ -14,7 +14,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Enhanced capabilities declaration in initialize method
 - Comprehensive MCP testing guide (`tests/MCP_TESTING.md`)
 - MCP protocol compliance test (`test_mcp_protocol.py`)
-- Debug MCP server with extensive logging (`debug_mcp_server.py`)
 - Connection test script (`test_mcp_connection.py`)
 
 ### Fixed

@@ -199,9 +199,10 @@ The `.amazonq/mcp.json` file configures the MCP server for Amazon Q CLI testing:
 4. **Permission Errors**: Check file permissions on test prompt files
 
 ### Debug Tools
-- **`debug_mcp_server.py`**: Enhanced logging version of MCP server
+- **Enhanced logging**: Set `FASTMCP_LOG_LEVEL=DEBUG` for detailed server logs
 - **Test logs**: Detailed execution logs in `results/` directory
 - **Manual testing**: Individual test scripts for focused debugging
+- **MCP integration tests**: Comprehensive protocol debugging with `test_mcp_integration.py`
 
 ## Success Criteria
 
