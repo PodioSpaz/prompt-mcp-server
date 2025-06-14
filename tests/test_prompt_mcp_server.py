@@ -111,7 +111,7 @@ class TestServerInitialization(TestPromptMCPServer):
         """Test server initialization with default settings"""
         server = PromptMCPServer()
         
-        self.assertEqual(server.version, "2.0.2")
+        self.assertEqual(server.version, "2.0.3")
         self.assertEqual(server.name, "prompt-mcp-server")
         self.assertIsInstance(server.prompt_directories, list)
         self.assertGreaterEqual(len(server.prompt_directories), 1)
@@ -340,7 +340,7 @@ class TestMCPProtocol(TestPromptMCPServer):
             self.assertIn("capabilities", response["result"])
             self.assertIn("serverInfo", response["result"])
             self.assertEqual(response["result"]["serverInfo"]["name"], "prompt-mcp-server")
-            self.assertEqual(response["result"]["serverInfo"]["version"], "2.0.2")
+            self.assertEqual(response["result"]["serverInfo"]["version"], "2.0.3")
         
         asyncio.run(run_test())
     
