@@ -442,11 +442,13 @@ class PromptMCPServer:
                         # Handle request synchronously by running async handler
                         response = asyncio.run(self.handle_request(request))
                         
-                        # Write response to stdout
-                        print(json.dumps(response), flush=True)
+                        # Write response to stdout with explicit newline and flush
+                        response_json = json.dumps(response, separators=(',', ':'))
+                        sys.stdout.write(response_json + '\n')
+                        sys.stdout.flush()
                         
                         # For debugging: log the request/response
-                        logger.debug(f"Processed request: {request.get('method', 'unknown')}")
+                        logger.info(f"Sent response for {request.get('method', 'unknown')} (id: {request.get('id')})")
                         
                     except json.JSONDecodeError as e:
                         logger.error(f"Invalid JSON received: {e}")
@@ -458,7 +460,9 @@ class PromptMCPServer:
                                 "message": "Parse error"
                             }
                         }
-                        print(json.dumps(error_response), flush=True)
+                        error_json = json.dumps(error_response, separators=(',', ':'))
+                        sys.stdout.write(error_json + '\n')
+                        sys.stdout.flush()
                         
                 except EOFError:
                     logger.info("Received EOFError, shutting down")
@@ -496,8 +500,10 @@ class PromptMCPServer:
                     request = json.loads(line)
                     response = await self.handle_request(request)
                     
-                    # Write response to stdout
-                    print(json.dumps(response), flush=True)
+                    # Write response to stdout with explicit formatting
+                    response_json = json.dumps(response, separators=(',', ':'))
+                    sys.stdout.write(response_json + '\n')
+                    sys.stdout.flush()
                     
                 except json.JSONDecodeError as e:
                     logger.error(f"Invalid JSON received: {e}")
@@ -509,7 +515,9 @@ class PromptMCPServer:
                             "message": "Parse error"
                         }
                     }
-                    print(json.dumps(error_response), flush=True)
+                    error_json = json.dumps(error_response, separators=(',', ':'))
+                    sys.stdout.write(error_json + '\n')
+                    sys.stdout.flush()
                 
         except KeyboardInterrupt:
             logger.info("Server interrupted by user")
