@@ -3,7 +3,7 @@
     "prompt-server": {
       "command": "uvx",
       "args": ["--from", "./dist/prompt_mcp_server-2.0.3-py3-none-any.whl", "prompt-mcp-server"],
-      "timeout": 10000
+      "timeout": 30000
     }
   }
 }

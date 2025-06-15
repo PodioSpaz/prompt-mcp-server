@@ -37,9 +37,9 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any, Set, Tuple
 import logging
 
-# Configure logging - minimal for MCP usage
+# Configure logging - INFO level for debugging Amazon Q CLI issues
 logging.basicConfig(
-    level=logging.WARNING,  # Only show warnings and errors
+    level=logging.INFO,  # Temporarily increase for debugging
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[logging.StreamHandler(sys.stderr)]
 )
