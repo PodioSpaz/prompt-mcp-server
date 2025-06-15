@@ -238,9 +238,7 @@ class PromptMCPServer:
                 "capabilities": {
                     "prompts": {
                         "listChanged": True
-                    },
-                    "tools": {},
-                    "resources": {}
+                    }
                 },
                 "serverInfo": {
                     "name": self.name,
@@ -350,13 +348,17 @@ class PromptMCPServer:
             }
     
     async def handle_tools_list(self, request: Dict[str, Any]) -> Dict[str, Any]:
-        """Handle MCP tools/list request"""
-        logger.info("Handling tools/list request")
+        """Handle MCP tools/list request - return error to trigger Amazon Q CLI fallback mode"""
+        logger.info("Handling tools/list request - returning error to trigger fallback")
+        
+        # Amazon Q CLI works better when server is marked as "failed"
+        # Return an error for tools/list to trigger the working fallback mode
         return {
             "jsonrpc": "2.0",
             "id": request.get("id"),
-            "result": {
-                "tools": []  # We don't provide any tools, only prompts
+            "error": {
+                "code": -32601,
+                "message": "Method not implemented"
             }
         }
     
