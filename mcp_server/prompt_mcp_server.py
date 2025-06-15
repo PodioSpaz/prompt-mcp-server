@@ -500,23 +500,31 @@ class PromptMCPServer:
     async def handle_request(self, request: Dict[str, Any]) -> Dict[str, Any]:
         """Handle incoming MCP requests"""
         method = request.get("method")
+        request_id = request.get("id", "no-id")
+        
+        # LOG ALL INCOMING REQUESTS
+        logger.info(f"🔵 INCOMING REQUEST: method='{method}', id={request_id}")
+        logger.info(f"🔵 REQUEST DETAILS: {json.dumps(request, separators=(',', ':'))}")
+        
+        response = None
         
         if method == "initialize":
-            return await self.handle_initialize(request)
+            response = await self.handle_initialize(request)
         elif method == "initialized" or method == "notifications/initialized":
             # Notification that initialization is complete - no response needed
             logger.info("Received initialized notification")
-            return None
+            response = None
         elif method == "prompts/list":
-            return await self.handle_prompts_list(request)
+            response = await self.handle_prompts_list(request)
         elif method == "prompts/get":
-            return await self.handle_prompts_get(request)
+            response = await self.handle_prompts_get(request)
         elif method == "tools/list":
-            return await self.handle_tools_list(request)
+            response = await self.handle_tools_list(request)
         elif method == "resources/list":
-            return await self.handle_resources_list(request)
+            response = await self.handle_resources_list(request)
         else:
-            return {
+            logger.warning(f"Unknown method: {method}")
+            response = {
                 "jsonrpc": "2.0",
                 "id": request.get("id"),
                 "error": {
@@ -524,6 +532,15 @@ class PromptMCPServer:
                     "message": f"Method not found: {method}"
                 }
             }
+        
+        # LOG ALL OUTGOING RESPONSES
+        if response is not None:
+            logger.info(f"🟢 OUTGOING RESPONSE: method='{method}', id={request_id}")
+            logger.info(f"🟢 RESPONSE DETAILS: {json.dumps(response, separators=(',', ':'))}")
+        else:
+            logger.info(f"🟡 NO RESPONSE: method='{method}' (notification)")
+        
+        return response
     
     def run_sync(self):
         """Run the MCP server synchronously - simplified for wrapper compatibility"""
@@ -546,6 +563,9 @@ class PromptMCPServer:
                     try:
                         request = json.loads(line)
                         
+                        # LOG RAW REQUEST RECEIVED
+                        logger.info(f"📥 RAW REQUEST RECEIVED: {line}")
+                        
                         # Handle request
                         response = asyncio.run(self.handle_request(request))
                         
@@ -554,6 +574,9 @@ class PromptMCPServer:
                             response_json = json.dumps(response, separators=(',', ':'))
                             sys.stdout.write(response_json + '\n')
                             sys.stdout.flush()
+                            logger.info(f"📤 RAW RESPONSE SENT: {response_json}")
+                        else:
+                            logger.info(f"📤 NO RESPONSE SENT (notification)")
                         
                     except json.JSONDecodeError as e:
                         logger.error(f"Invalid JSON received: {e}")

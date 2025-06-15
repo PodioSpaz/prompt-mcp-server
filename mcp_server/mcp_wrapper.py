@@ -84,15 +84,25 @@ def main():
             logger.error(f"stdout_reader error: {e}")
     
     def stderr_reader():
-        """Read server stderr and forward to stderr"""
+        """Read server stderr and forward to stderr + log file"""
         try:
-            while True:
-                stderr_line = process.stderr.readline()
-                if not stderr_line:
-                    break
-                # Forward server errors to stderr
-                sys.stderr.write(stderr_line)
-                sys.stderr.flush()
+            # Create log file for easier monitoring
+            log_file_path = "/tmp/mcp_server_debug.log"
+            with open(log_file_path, "w") as log_file:
+                log_file.write(f"=== MCP Server Debug Log Started ===\n")
+                log_file.flush()
+                
+                while True:
+                    stderr_line = process.stderr.readline()
+                    if not stderr_line:
+                        break
+                    
+                    # Write to both stderr and log file
+                    sys.stderr.write(stderr_line)
+                    sys.stderr.flush()
+                    
+                    log_file.write(stderr_line)
+                    log_file.flush()
         except Exception as e:
             logger.error(f"stderr_reader error: {e}")
     
