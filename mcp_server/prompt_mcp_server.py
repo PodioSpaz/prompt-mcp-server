@@ -403,68 +403,18 @@ class PromptMCPServer:
             }
     
     def run_sync(self):
-        """Run the MCP server synchronously"""
+        """Run the MCP server synchronously - simplified for wrapper compatibility"""
         logger.info(f"Starting {self.name} v{self.version}")
         
-        # Set up signal handlers for graceful shutdown
-        import signal
-        shutdown_requested = False
-        
-        def signal_handler(signum, frame):
-            nonlocal shutdown_requested
-            logger.info(f"Received signal {signum}, initiating graceful shutdown")
-            shutdown_requested = True
-        
-        signal.signal(signal.SIGTERM, signal_handler)
-        signal.signal(signal.SIGINT, signal_handler)
-        
         try:
-            # Make stdin non-blocking to handle client connection timing
-            import select
-            
-            # Track if we've received the initialized notification
-            initialized_received = False
-            
-            while not shutdown_requested:
+            while True:
                 try:
-                    # Check if data is available on stdin with a timeout
-                    ready, _, _ = select.select([sys.stdin], [], [], 1.0)
+                    # Simple blocking read - wrapper handles timing
+                    line = sys.stdin.readline()
                     
-                    if not ready:
-                        # No data available, continue waiting
-                        # If we've been initialized and waiting for a while, check if we should exit
-                        if initialized_received:
-                            # Continue waiting - don't exit on timeout after initialization
-                            pass
-                        continue
-                    
-                    # Read JSON-RPC request from stdin
-                    try:
-                        line = sys.stdin.readline()
-                    except:
-                        # stdin might be closed, but keep trying if we're initialized
-                        if initialized_received:
-                            logger.info("stdin read failed after initialization, continuing to wait...")
-                            import time
-                            time.sleep(1)
-                            continue
-                        else:
-                            logger.info("stdin read failed before initialization, shutting down")
-                            break
-                    
-                    # Check for EOF or empty line
                     if not line:
-                        if initialized_received:
-                            # We've been initialized, so Amazon Q CLI might send background requests
-                            # Don't exit immediately, keep the server alive
-                            logger.info("EOF after initialization - keeping server alive for background tasks...")
-                            import time
-                            time.sleep(1)  # Short sleep and continue the loop
-                            continue
-                        else:
-                            # EOF before initialization, normal shutdown
-                            logger.info("EOF before initialization, shutting down")
-                            break
+                        # EOF - normal shutdown
+                        break
                     
                     line = line.strip()
                     if not line:
@@ -473,22 +423,14 @@ class PromptMCPServer:
                     try:
                         request = json.loads(line)
                         
-                        # Track if we received the initialized notification
-                        if request.get('method') == 'notifications/initialized':
-                            initialized_received = True
-                            logger.info("Received initialized notification - server will stay alive for background tasks")
-                        
-                        # Handle request synchronously by running async handler
+                        # Handle request
                         response = asyncio.run(self.handle_request(request))
                         
-                        # Write response to stdout (only if response is not None)
+                        # Send response
                         if response is not None:
                             response_json = json.dumps(response, separators=(',', ':'))
                             sys.stdout.write(response_json + '\n')
                             sys.stdout.flush()
-                            
-                            # For debugging: log the request/response
-                            logger.info(f"Sent response for {request.get('method', 'unknown')} (id: {request.get('id')})")
                         
                     except json.JSONDecodeError as e:
                         logger.error(f"Invalid JSON received: {e}")
@@ -505,20 +447,17 @@ class PromptMCPServer:
                         sys.stdout.flush()
                         
                 except EOFError:
-                    logger.info("Received EOFError, shutting down")
                     break
                 except KeyboardInterrupt:
-                    logger.info("Received KeyboardInterrupt, shutting down")
                     break
                 except Exception as e:
                     logger.error(f"Error in main loop: {e}")
-                    # Don't break on individual errors, keep server running
                     continue
                 
         except Exception as e:
             logger.error(f"Server error: {e}")
         finally:
-            logger.info("Enhanced Prompt MCP Server stopped")
+            logger.info(f"{self.name} stopped")
 
     async def run(self):
         """Run the MCP server"""
