@@ -301,9 +301,9 @@ This is a single-file implementation that:
 5. Returns responses via stdout
 6. Logs to stderr
 
-## Version
+## Version History
 
-**2.0.0** - Single-file MCP server implementation
+For detailed version information, release notes, and changelog, see [CHANGELOG.md](CHANGELOG.md).
 
 ---
 
