@@ -33,6 +33,7 @@ import os
 import sys
 import re
 import time
+import threading
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Set, Tuple
 import logging
@@ -49,17 +50,113 @@ class PromptMCPServer:
     """Single-file MCP server for prompt management"""
     
     def __init__(self):
-        self.version = "2.0.6"
+        self.version = "2.0.7"
         self.name = "prompt-mcp-server"
         self.prompt_directories = self._get_prompt_directories()
         self.prompts_cache = {}
         self.cache_timestamp = 0
         self.cache_ttl = 300  # 5 minutes
         
+        # File monitoring
+        self.file_monitor_thread = None
+        self.file_monitor_stop_event = threading.Event()
+        self.directory_snapshots = {}  # Track file modification times
+        
         logger.info(f"Initialized {self.name} v{self.version}")
         logger.info(f"Monitoring {len(self.prompt_directories)} directories for prompts:")
         for directory in self.prompt_directories:
             logger.info(f"  - {directory}")
+        
+        # Start file monitoring
+        self._start_file_monitoring()
+    
+    def _start_file_monitoring(self):
+        """Start background thread to monitor file changes"""
+        if self.file_monitor_thread is None or not self.file_monitor_thread.is_alive():
+            self.file_monitor_thread = threading.Thread(
+                target=self._file_monitor_worker,
+                daemon=True,
+                name="FileMonitor"
+            )
+            self.file_monitor_thread.start()
+            logger.info("Started file monitoring thread")
+    
+    def _stop_file_monitoring(self):
+        """Stop the file monitoring thread"""
+        if self.file_monitor_thread and self.file_monitor_thread.is_alive():
+            self.file_monitor_stop_event.set()
+            self.file_monitor_thread.join(timeout=2.0)
+            logger.info("Stopped file monitoring thread")
+    
+    def _get_directory_snapshot(self, directory: Path) -> Dict[str, float]:
+        """Get snapshot of all .md files in directory with their modification times"""
+        snapshot = {}
+        try:
+            if directory.exists() and directory.is_dir():
+                for file_path in directory.glob("*.md"):
+                    try:
+                        snapshot[str(file_path)] = file_path.stat().st_mtime
+                    except (OSError, IOError):
+                        # File might have been deleted between glob and stat
+                        pass
+        except (OSError, IOError):
+            # Directory might not be accessible
+            pass
+        return snapshot
+    
+    def _file_monitor_worker(self):
+        """Background worker that monitors file changes"""
+        # Initial snapshot
+        for directory in self.prompt_directories:
+            self.directory_snapshots[str(directory)] = self._get_directory_snapshot(directory)
+        
+        logger.info("File monitoring started - checking every 2 seconds")
+        
+        while not self.file_monitor_stop_event.is_set():
+            try:
+                # Check each directory for changes
+                changes_detected = False
+                
+                for directory in self.prompt_directories:
+                    dir_str = str(directory)
+                    current_snapshot = self._get_directory_snapshot(directory)
+                    previous_snapshot = self.directory_snapshots.get(dir_str, {})
+                    
+                    # Check for changes
+                    if current_snapshot != previous_snapshot:
+                        changes_detected = True
+                        
+                        # Log specific changes
+                        added_files = set(current_snapshot.keys()) - set(previous_snapshot.keys())
+                        removed_files = set(previous_snapshot.keys()) - set(current_snapshot.keys())
+                        modified_files = set()
+                        
+                        for file_path in set(current_snapshot.keys()) & set(previous_snapshot.keys()):
+                            if current_snapshot[file_path] != previous_snapshot[file_path]:
+                                modified_files.add(file_path)
+                        
+                        if added_files:
+                            logger.info(f"Detected new prompt files: {[Path(f).name for f in added_files]}")
+                        if removed_files:
+                            logger.info(f"Detected removed prompt files: {[Path(f).name for f in removed_files]}")
+                        if modified_files:
+                            logger.info(f"Detected modified prompt files: {[Path(f).name for f in modified_files]}")
+                        
+                        # Update snapshot
+                        self.directory_snapshots[dir_str] = current_snapshot
+                
+                # Clear cache if changes detected
+                if changes_detected:
+                    logger.info("File changes detected - clearing prompts cache")
+                    self.prompts_cache.clear()
+                    self.cache_timestamp = 0
+                
+                # Wait before next check
+                self.file_monitor_stop_event.wait(2.0)  # Check every 2 seconds
+                
+            except Exception as e:
+                logger.error(f"Error in file monitoring: {e}")
+                self.file_monitor_stop_event.wait(5.0)  # Wait longer on error
     
     def _get_prompt_directories(self) -> List[Path]:
         """Get list of directories to search for prompts"""
@@ -457,6 +554,8 @@ class PromptMCPServer:
         except Exception as e:
             logger.error(f"Server error: {e}")
         finally:
+            # Stop file monitoring
+            self._stop_file_monitoring()
             logger.info(f"{self.name} stopped")
 
     async def run(self):
@@ -504,6 +603,8 @@ class PromptMCPServer:
         except Exception as e:
             logger.error(f"Server error: {e}")
         finally:
+            # Stop file monitoring
+            self._stop_file_monitoring()
             logger.info("Enhanced Prompt MCP Server stopped")
 
 async def main():

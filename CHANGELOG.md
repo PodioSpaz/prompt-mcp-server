@@ -5,6 +5,29 @@ All notable changes to the Prompt MCP Server project will be documented in this 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.7] - 2025-06-15
+
+### Added
+- **Real-time File Monitoring**: Server now detects file changes while running
+  - Monitors all prompt directories every 2 seconds for changes
+  - Detects added, removed, and modified .md files automatically
+  - Automatically clears cache when changes are detected
+  - Logs specific file changes (added/removed/modified) for debugging
+  - Background thread-based monitoring with proper cleanup
+
+### Fixed
+- **Dynamic Prompt Updates**: Resolved issue where server couldn't detect file changes after startup
+  - Previously: Server only scanned directories once at startup
+  - Now: Continuously monitors directories and updates prompt list in real-time
+  - Example: Deleting `home_test.md` while server is running now removes it from `/prompts list`
+
+### Technical Details
+- File monitoring runs in background daemon thread
+- Uses polling approach (2-second intervals) for cross-platform compatibility
+- Tracks file modification times to detect changes efficiently
+- Graceful thread shutdown when server stops
+- No external dependencies required (uses built-in threading)
+
 ## [2.0.6] - 2025-06-15
 
 ### Changed
