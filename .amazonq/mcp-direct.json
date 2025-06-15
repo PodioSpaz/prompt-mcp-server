@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "prompt-server": {
+      "command": "python3",
+      "args": ["/Users/sawitmee/Code/amazon-q-developer/mcp-prompts-local/mcp_wrapper.py"],
+      "timeout": 30000
+    }
+  }
+}

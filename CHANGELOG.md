@@ -5,6 +5,38 @@ All notable changes to the Prompt MCP Server project will be documented in this 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.5] - 2025-06-15
+
+### Added
+- **SOLUTION**: Production MCP wrapper for Amazon Q CLI compatibility
+  - New `mcp_wrapper.py` - Production-ready wrapper with clean architecture
+  - Threaded I/O handling for reliable communication with Amazon Q CLI
+  - 5-second background task window to handle Amazon Q CLI timing requirements
+  - Proper error handling and graceful shutdown mechanisms
+  - Minimal production logging (WARNING level)
+
+### Fixed
+- **CRITICAL**: Complete resolution of Amazon Q CLI infinite loading and timeout issues
+  - Root cause: Amazon Q CLI closes stdin after `notifications/initialized` but background tasks need time to execute
+  - Solution: Wrapper maintains server connection during background task execution window
+  - Fixed "Operation timed out: recv for tools/list" errors permanently
+  - Fixed "Prompt list query failed for prompt_server" errors permanently
+  - All prompts now load consistently without timeout issues
+
+### Changed
+- **Architecture**: Wrapper-based solution for better separation of concerns
+  - Wrapper handles Amazon Q CLI timing and communication patterns
+  - Server simplified to focus purely on MCP protocol implementation
+  - Entry point updated to use wrapper for both source and packaged execution
+  - Clean separation between timing logic (wrapper) and business logic (server)
+
+### Technical Details
+- Amazon Q CLI communication pattern: `initialize` → `notifications/initialized` → closes stdin → background tasks execute
+- Background tasks (`tools/list`, `prompts/list`) need 5-second window to start and send requests
+- Wrapper uses threading to monitor stdin closure and maintain server connection
+- Server uses simplified blocking I/O since wrapper handles timing complexity
+- Both source execution and packaged distribution (uvx) now work reliably
+
 ## [2.0.4] - 2025-06-15
 
 ### Fixed
