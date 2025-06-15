@@ -422,6 +422,9 @@ class PromptMCPServer:
             # Make stdin non-blocking to handle client connection timing
             import select
             
+            # Track if we've received the initialized notification
+            initialized_received = False
+            
             while not shutdown_requested:
                 try:
                     # Check if data is available on stdin with a timeout
@@ -429,52 +432,39 @@ class PromptMCPServer:
                     
                     if not ready:
                         # No data available, continue waiting
+                        # If we've been initialized and waiting for a while, check if we should exit
+                        if initialized_received:
+                            # Continue waiting - don't exit on timeout after initialization
+                            pass
                         continue
                     
                     # Read JSON-RPC request from stdin
                     try:
                         line = sys.stdin.readline()
                     except:
-                        # stdin might be closed, wait for potential reconnection
-                        logger.info("stdin read failed, entering extended wait mode...")
-                        import time
-                        time.sleep(30)  # Wait 30 seconds for background tasks
-                        logger.info("Extended wait completed, shutting down")
-                        break
+                        # stdin might be closed, but keep trying if we're initialized
+                        if initialized_received:
+                            logger.info("stdin read failed after initialization, continuing to wait...")
+                            import time
+                            time.sleep(1)
+                            continue
+                        else:
+                            logger.info("stdin read failed before initialization, shutting down")
+                            break
                     
                     # Check for EOF or empty line
                     if not line:
-                        # EOF received - Amazon Q CLI spawns background tasks that need time
-                        # Enter extended wait mode for background tasks
-                        logger.info("Received EOF, entering extended wait mode for Amazon Q CLI background tasks...")
-                        
-                        # Amazon Q CLI background tasks can take time to spawn and execute
-                        # We need to keep the server alive but stdin is closed
-                        # So we'll wait with periodic checks
-                        import time
-                        wait_time = 30  # Wait 30 seconds total
-                        check_interval = 1  # Check every 1 second
-                        
-                        for i in range(wait_time):
-                            time.sleep(check_interval)
-                            if i % 5 == 0:  # Log every 5 seconds
-                                logger.info(f"Waiting for background tasks... ({i+1}s/{wait_time}s)")
-                            
-                            # Check if we somehow got new data (unlikely but possible)
-                            try:
-                                ready, _, _ = select.select([sys.stdin], [], [], 0.1)
-                                if ready:
-                                    line = sys.stdin.readline()
-                                    if line and line.strip():
-                                        logger.info(f"Received background request after {i+1}s")
-                                        break
-                            except:
-                                pass
-                        
-                        if not line or not line.strip():
-                            logger.info(f"Extended wait completed ({wait_time}s), shutting down")
+                        if initialized_received:
+                            # We've been initialized, so Amazon Q CLI might send background requests
+                            # Don't exit immediately, keep the server alive
+                            logger.info("EOF after initialization - keeping server alive for background tasks...")
+                            import time
+                            time.sleep(1)  # Short sleep and continue the loop
+                            continue
+                        else:
+                            # EOF before initialization, normal shutdown
+                            logger.info("EOF before initialization, shutting down")
                             break
-                        # If we got here, we have a new line to process
                     
                     line = line.strip()
                     if not line:
@@ -482,6 +472,11 @@ class PromptMCPServer:
                     
                     try:
                         request = json.loads(line)
+                        
+                        # Track if we received the initialized notification
+                        if request.get('method') == 'notifications/initialized':
+                            initialized_received = True
+                            logger.info("Received initialized notification - server will stay alive for background tasks")
                         
                         # Handle request synchronously by running async handler
                         response = asyncio.run(self.handle_request(request))

@@ -4,6 +4,7 @@ import subprocess
 import json
 import time
 import select
+import threading
 
 # Start the actual MCP server
 process = subprocess.Popen(
@@ -21,50 +22,88 @@ def log_message(direction, data):
         f.write(f"[{timestamp}] {direction}: {repr(data)}\n")
         f.flush()
 
-try:
-    while True:
-        # Check for input from Amazon Q CLI with timeout
-        ready, _, _ = select.select([sys.stdin], [], [], 0.1)
-        if ready:
+# Track if we've seen the initialized notification
+initialized_received = False
+
+def stdin_reader():
+    """Read from Amazon Q CLI and forward to server"""
+    global initialized_received
+    try:
+        while True:
             line = sys.stdin.readline()
             if not line:
-                log_message("EOF", "Amazon Q CLI disconnected")
+                log_message("EOF", "Amazon Q CLI closed stdin")
+                if initialized_received:
+                    log_message("INFO", "Keeping connection alive for background tasks...")
+                    # Don't close server stdin yet, wait for potential background requests
+                    time.sleep(5)  # Give background tasks time to start
+                    log_message("INFO", "Closing server stdin after delay")
+                process.stdin.close()
                 break
                 
             log_message("IN ", line.strip())
             
+            # Track initialized notification
+            try:
+                req = json.loads(line.strip())
+                if req.get('method') == 'notifications/initialized':
+                    initialized_received = True
+                    log_message("INFO", "Initialized notification received - watching for background tasks")
+            except:
+                pass
+            
             # Forward to actual server
             process.stdin.write(line)
             process.stdin.flush()
-        
-        # Check for response from server with timeout
-        ready, _, _ = select.select([process.stdout], [], [], 0.1)
-        if ready:
-            response = process.stdout.readline()
-            if response:
-                log_message("OUT", response.strip())
-                
-                # Forward to Amazon Q CLI
-                sys.stdout.write(response)
-                sys.stdout.flush()
-        
-        # Check for any stderr output
-        ready, _, _ = select.select([process.stderr], [], [], 0.1)
-        if ready:
-            stderr_line = process.stderr.readline()
-            if stderr_line:
-                log_message("ERR", stderr_line.strip())
-        
-        # Check if server process is still alive
-        if process.poll() is not None:
-            log_message("SRV", f"Server process ended with code {process.returncode}")
-            break
+    except Exception as e:
+        log_message("ERR", f"stdin_reader error: {e}")
 
+def stdout_reader():
+    """Read from server and forward to Amazon Q CLI"""
+    try:
+        while True:
+            response = process.stdout.readline()
+            if not response:
+                log_message("EOF", "Server closed stdout")
+                break
+                
+            log_message("OUT", response.strip())
+            
+            # Forward to Amazon Q CLI
+            sys.stdout.write(response)
+            sys.stdout.flush()
+    except Exception as e:
+        log_message("ERR", f"stdout_reader error: {e}")
+
+def stderr_reader():
+    """Read server stderr and log it"""
+    try:
+        while True:
+            stderr_line = process.stderr.readline()
+            if not stderr_line:
+                break
+            log_message("ERR", stderr_line.strip())
+    except Exception as e:
+        log_message("ERR", f"stderr_reader error: {e}")
+
+# Start reader threads
+stdin_thread = threading.Thread(target=stdin_reader, daemon=True)
+stdout_thread = threading.Thread(target=stdout_reader, daemon=True)
+stderr_thread = threading.Thread(target=stderr_reader, daemon=True)
+
+stdin_thread.start()
+stdout_thread.start()
+stderr_thread.start()
+
+try:
+    # Wait for the process to complete
+    process.wait()
+    log_message("END", f"Server process ended with code {process.returncode}")
 except KeyboardInterrupt:
     log_message("INT", "Interrupted by user")
+    process.terminate()
+    process.wait()
 except Exception as e:
     log_message("EXC", f"Exception: {e}")
 finally:
-    process.terminate()
-    process.wait()
     log_message("END", "Debug wrapper ended")
