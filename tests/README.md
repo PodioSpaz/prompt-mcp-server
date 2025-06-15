@@ -171,7 +171,7 @@ The `.amazonq/mcp.json` file configures the MCP server for Amazon Q CLI testing:
   "mcpServers": {
     "prompt-server": {
       "command": "uvx",
-      "args": ["--from", "../dist/prompt_mcp_server-2.0.2-py3-none-any.whl", "prompt-mcp-server"],
+      "args": ["--from", "../dist/prompt_mcp_server-2.0.3-py3-none-any.whl", "prompt-mcp-server"],
       "timeout": 10000
     }
   }
@@ -225,7 +225,7 @@ The `.amazonq/mcp.json` file configures the MCP server for Amazon Q CLI testing:
 ---
 
 **Last Updated**: 2025-06-15
-**Test Suite Version**: 2.0.2
+**Test Suite Version**: 2.0.3
 **Total Test Coverage**: Unit + Functional + Integration + MCP Protocol
 python3 tests/run_all_tests.py --functional-only
 

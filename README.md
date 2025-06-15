@@ -22,7 +22,7 @@ uvx prompt-mcp-server
 
 # Or install from local build
 pyproject-build
-uvx --from ./dist/prompt_mcp_server-2.0.2-py3-none-any.whl prompt-mcp-server
+uvx --from ./dist/prompt_mcp_server-2.0.3-py3-none-any.whl prompt-mcp-server
 ```
 
 ### Direct Usage

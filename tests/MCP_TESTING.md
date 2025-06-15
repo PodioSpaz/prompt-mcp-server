@@ -14,7 +14,7 @@ This is the MCP configuration file that Amazon Q CLI will use when running from 
   "mcpServers": {
     "prompt-server": {
       "command": "uvx",
-      "args": ["--from", "../dist/prompt_mcp_server-2.0.2-py3-none-any.whl", "prompt-mcp-server"],
+      "args": ["--from", "../dist/prompt_mcp_server-2.0.3-py3-none-any.whl", "prompt-mcp-server"],
       "timeout": 10000
     }
   }
