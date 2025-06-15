@@ -107,7 +107,7 @@ The `.amazonq/mcp.json` file configures Amazon Q to use this server:
 - **Default**: Disabled
 - **When enabled**:
   - Forces `INFO` level logging regardless of `MCP_LOG_LEVEL`
-  - Creates `/tmp/mcp_server_debug.log` file for easy monitoring
+  - Creates debug log file for easy monitoring
   - Logs all MCP requests and responses with full JSON details
   - Logs file monitoring activity and cache operations
   - Color-coded log messages with emojis for easy identification
@@ -118,19 +118,37 @@ The `.amazonq/mcp.json` file configures Amazon Q to use this server:
   tail -f /tmp/mcp_server_debug.log
   ```
 
+### MCP_LOG_FILE
+- **Purpose**: Set custom path for the debug log file
+- **Default**: `/tmp/mcp_server_debug.log`
+- **Only used when**: `MCP_DEBUG_LOGGING` is enabled
+- **Example**:
+  ```bash
+  export MCP_DEBUG_LOGGING=1
+  export MCP_LOG_FILE=/path/to/custom/mcp_debug.log
+  # Then monitor logs with:
+  tail -f /path/to/custom/mcp_debug.log
+  ```
+
 ### Debug Logging Usage
 
 To enable debug logging for troubleshooting:
 
 ```bash
-# Enable debug logging
+# Enable debug logging with default log file
 export MCP_DEBUG_LOGGING=1
+
+# Or enable with custom log file location
+export MCP_DEBUG_LOGGING=1
+export MCP_LOG_FILE=/path/to/custom/debug.log
 
 # Start Amazon Q CLI
 q chat
 
 # In another terminal, monitor detailed logs
 tail -f /tmp/mcp_server_debug.log
+# Or if using custom log file:
+tail -f /path/to/custom/debug.log
 
 # Test file changes
 echo "# Test" > ~/.aws/amazonq/prompts/test.md

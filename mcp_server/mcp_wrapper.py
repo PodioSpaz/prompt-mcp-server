@@ -89,12 +89,13 @@ def main():
         try:
             # Check if debug logging is enabled
             enable_debug_logging = os.environ.get('MCP_DEBUG_LOGGING', '').lower() in ('1', 'true', 'yes', 'on')
-            log_file_path = "/tmp/mcp_server_debug.log"
+            log_file_path = os.environ.get('MCP_LOG_FILE', '/tmp/mcp_server_debug.log')
             
             if enable_debug_logging:
                 # Create log file for easier monitoring when debug logging is enabled
                 with open(log_file_path, "w") as log_file:
                     log_file.write(f"=== MCP Server Debug Log Started ===\n")
+                    log_file.write(f"Log file: {log_file_path}\n")
                     log_file.flush()
                     
                     while True:

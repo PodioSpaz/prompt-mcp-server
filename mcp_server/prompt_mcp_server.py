@@ -30,11 +30,15 @@ Environment Variables:
                         Default: disabled
                         When enabled:
                         - Forces INFO level logging
-                        - Creates /tmp/mcp_server_debug.log file
+                        - Creates debug log file for monitoring
                         - Logs all MCP requests/responses
                         - Logs file monitoring activity
+    
+    MCP_LOG_FILE - Set custom log file path when debug logging is enabled
+                   Default: /tmp/mcp_server_debug.log
+                   Example: /path/to/custom/mcp_debug.log
 
-Version: 2.0.8
+Version: 2.0.7
 Author: Amazon Q Developer CLI Team
 """
 
