@@ -378,7 +378,7 @@ class PromptMCPServer:
         
         if method == "initialize":
             return await self.handle_initialize(request)
-        elif method == "initialized":
+        elif method == "initialized" or method == "notifications/initialized":
             # Notification that initialization is complete - no response needed
             logger.info("Received initialized notification")
             return None
