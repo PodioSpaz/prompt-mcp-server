@@ -22,8 +22,19 @@ Usage:
 Environment Variables:
     PROMPTS_PATH - Colon-separated list of directories to search for prompts
                    Default: ~/.aws/amazonq/prompts
+    
+    MCP_LOG_LEVEL - Set logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+                    Default: WARNING
+    
+    MCP_DEBUG_LOGGING - Enable comprehensive debug logging (1, true, yes, on)
+                        Default: disabled
+                        When enabled:
+                        - Forces INFO level logging
+                        - Creates /tmp/mcp_server_debug.log file
+                        - Logs all MCP requests/responses
+                        - Logs file monitoring activity
 
-Version: 2.0.2
+Version: 2.0.8
 Author: Amazon Q Developer CLI Team
 """
 
@@ -38,9 +49,27 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any, Set, Tuple
 import logging
 
-# Configure logging - INFO level for debugging file monitoring
+# Configure logging based on environment variables
+log_level = os.environ.get('MCP_LOG_LEVEL', 'WARNING').upper()
+enable_debug_logging = os.environ.get('MCP_DEBUG_LOGGING', '').lower() in ('1', 'true', 'yes', 'on')
+
+# Set log level - default to WARNING (production), can be overridden
+if enable_debug_logging:
+    log_level = 'INFO'  # Force INFO level when debug logging is enabled
+
+# Map string levels to logging constants
+level_map = {
+    'DEBUG': logging.DEBUG,
+    'INFO': logging.INFO,
+    'WARNING': logging.WARNING,
+    'ERROR': logging.ERROR,
+    'CRITICAL': logging.CRITICAL
+}
+
+actual_level = level_map.get(log_level, logging.WARNING)
+
 logging.basicConfig(
-    level=logging.INFO,  # Enable detailed logging to debug file monitoring
+    level=actual_level,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[logging.StreamHandler(sys.stderr)]
 )

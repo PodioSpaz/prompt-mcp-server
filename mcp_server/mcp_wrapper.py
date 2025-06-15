@@ -17,6 +17,7 @@ import json
 import time
 import threading
 import logging
+import os
 
 # Configure minimal logging for production
 logging.basicConfig(
@@ -84,25 +85,38 @@ def main():
             logger.error(f"stdout_reader error: {e}")
     
     def stderr_reader():
-        """Read server stderr and forward to stderr + log file"""
+        """Read server stderr and forward to stderr + optional log file"""
         try:
-            # Create log file for easier monitoring
+            # Check if debug logging is enabled
+            enable_debug_logging = os.environ.get('MCP_DEBUG_LOGGING', '').lower() in ('1', 'true', 'yes', 'on')
             log_file_path = "/tmp/mcp_server_debug.log"
-            with open(log_file_path, "w") as log_file:
-                log_file.write(f"=== MCP Server Debug Log Started ===\n")
-                log_file.flush()
-                
+            
+            if enable_debug_logging:
+                # Create log file for easier monitoring when debug logging is enabled
+                with open(log_file_path, "w") as log_file:
+                    log_file.write(f"=== MCP Server Debug Log Started ===\n")
+                    log_file.flush()
+                    
+                    while True:
+                        stderr_line = process.stderr.readline()
+                        if not stderr_line:
+                            break
+                        
+                        # Write to both stderr and log file
+                        sys.stderr.write(stderr_line)
+                        sys.stderr.flush()
+                        
+                        log_file.write(stderr_line)
+                        log_file.flush()
+            else:
+                # Normal operation - only forward to stderr
                 while True:
                     stderr_line = process.stderr.readline()
                     if not stderr_line:
                         break
-                    
-                    # Write to both stderr and log file
+                    # Forward server errors to stderr
                     sys.stderr.write(stderr_line)
                     sys.stderr.flush()
-                    
-                    log_file.write(stderr_line)
-                    log_file.flush()
         except Exception as e:
             logger.error(f"stderr_reader error: {e}")
     

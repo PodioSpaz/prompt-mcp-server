@@ -81,6 +81,70 @@ The `.amazonq/mcp.json` file configures Amazon Q to use this server:
 }
 ```
 
+## Environment Variables
+
+### PROMPTS_PATH
+- **Purpose**: Specify custom directories to search for prompt files
+- **Format**: Colon-separated list of directories (Unix/Linux/macOS) or semicolon-separated (Windows)
+- **Default**: `~/.aws/amazonq/prompts`
+- **Example**: 
+  ```bash
+  export PROMPTS_PATH="/path/to/prompts1:/path/to/prompts2"
+  ```
+
+### MCP_LOG_LEVEL
+- **Purpose**: Set the logging level for the MCP server
+- **Values**: `DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`
+- **Default**: `WARNING` (production level - only warnings and errors)
+- **Example**:
+  ```bash
+  export MCP_LOG_LEVEL=INFO
+  ```
+
+### MCP_DEBUG_LOGGING
+- **Purpose**: Enable comprehensive debug logging with detailed request/response tracing
+- **Values**: `1`, `true`, `yes`, `on` (case-insensitive)
+- **Default**: Disabled
+- **When enabled**:
+  - Forces `INFO` level logging regardless of `MCP_LOG_LEVEL`
+  - Creates `/tmp/mcp_server_debug.log` file for easy monitoring
+  - Logs all MCP requests and responses with full JSON details
+  - Logs file monitoring activity and cache operations
+  - Color-coded log messages with emojis for easy identification
+- **Example**:
+  ```bash
+  export MCP_DEBUG_LOGGING=1
+  # Then monitor logs with:
+  tail -f /tmp/mcp_server_debug.log
+  ```
+
+### Debug Logging Usage
+
+To enable debug logging for troubleshooting:
+
+```bash
+# Enable debug logging
+export MCP_DEBUG_LOGGING=1
+
+# Start Amazon Q CLI
+q chat
+
+# In another terminal, monitor detailed logs
+tail -f /tmp/mcp_server_debug.log
+
+# Test file changes
+echo "# Test" > ~/.aws/amazonq/prompts/test.md
+rm ~/.aws/amazonq/prompts/test.md
+```
+
+The debug logs will show:
+- 📥 Raw requests received from Amazon Q CLI
+- 🔵 Parsed incoming requests with details
+- 🟢 Outgoing responses with full content
+- 📤 Raw responses sent to Amazon Q CLI
+- 📢 MCP notifications sent (e.g., prompts list changed)
+- File monitoring activity and cache operations
+
 ## Testing
 
 The project includes comprehensive unit and functional tests:
