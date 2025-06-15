@@ -5,7 +5,7 @@
       "args": ["--from", "./dist/prompt_mcp_server-2.0.7-py3-none-any.whl", "prompt-mcp-server"],
       "env": {
         "PROMPTS_PATH": "~/.aws/amazonq/prompts",
-        "MCP_DEBUG_LOGGING": "false",
+        "MCP_DEBUG_LOGGING": "true",
         "MCP_LOG_LEVEL": "DEBUG",
         "MCP_LOG_FILE": "/tmp/mcp_server_debug.log"
       },

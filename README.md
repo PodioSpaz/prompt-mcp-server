@@ -4,13 +4,16 @@ A single-file Model Context Protocol (MCP) server for Amazon Q Developer CLI tha
 
 ## Features
 
-- **Prompt Discovery**: Lists all `*.md` files from configured directories
-- **Default Directory**: `~/.aws/amazonq/prompts` (created automatically)
-- **Custom Directories**: Override with `PROMPTS_PATH` environment variable (PATH-like format)
-- **Variable Substitution**: Supports `{variable}` placeholders in prompts
-- **Cross-Platform**: Works on Unix/Linux/macOS (Windows compatible)
-- **Error Handling**: Comprehensive error handling and logging
-- **No Dependencies**: Pure Python 3.8+ implementation
+- **🔄 Real-time File Monitoring**: Automatically detects file changes and updates prompt list
+- **📢 MCP Notifications**: Sends notifications to Amazon Q CLI for automatic refresh
+- **📁 Prompt Discovery**: Lists all `*.md` files from configured directories
+- **🏠 Default Directory**: `~/.aws/amazonq/prompts` (created automatically)
+- **🎯 Custom Directories**: Override with `PROMPTS_PATH` environment variable (PATH-like format)
+- **🔧 Variable Substitution**: Supports `{variable}` placeholders in prompts
+- **🔍 Configurable Logging**: Production-safe defaults with comprehensive debug mode
+- **🌐 Cross-Platform**: Works on Unix/Linux/macOS (Windows compatible)
+- **⚡ Error Handling**: Comprehensive error handling and logging
+- **📦 No Dependencies**: Pure Python 3.8+ implementation
 
 ## Installation & Usage
 

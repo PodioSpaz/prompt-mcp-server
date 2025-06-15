@@ -8,16 +8,44 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [2.0.7] - 2025-06-15
 
 ### Added
-- **Real-time File Monitoring**: Server now detects file changes while running
+- **Real-time File Monitoring with MCP Notifications**: Complete solution for dynamic prompt updates
   - Monitors all prompt directories every 2 seconds for changes
   - Detects added, removed, and modified .md files automatically
-  - Automatically clears cache when changes are detected
-  - Logs specific file changes (added/removed/modified) for debugging
+  - Sends MCP `notifications/prompts/list_changed` to Amazon Q CLI
+  - Amazon Q CLI automatically refreshes prompt list when notified
   - Background thread-based monitoring with proper cleanup
+  - Logs specific file changes (added/removed/modified) for debugging
+
+- **Configurable Logging System**: Production-ready logging with debug capabilities
+  - **MCP_LOG_LEVEL**: Set logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+  - **MCP_DEBUG_LOGGING**: Enable comprehensive debug logging (1, true, yes, on)
+  - **MCP_LOG_FILE**: Set custom debug log file path (default: /tmp/mcp_server_debug.log)
+  - Default: WARNING level (production-safe, minimal output)
+  - Debug mode: Creates log file with detailed request/response tracing
+  - Color-coded log messages with emojis for easy identification
+
+- **Enhanced Debug Features**: When MCP_DEBUG_LOGGING is enabled
+  - 📥 Raw requests received from Amazon Q CLI
+  - 🔵 Parsed incoming requests with full JSON details
+  - 🟢 Outgoing responses with complete content
+  - 📤 Raw responses sent to Amazon Q CLI
+  - 📢 MCP notifications sent (prompts list changed)
+  - File monitoring activity and cache operations
+  - Request/response timing and performance metrics
 
 ### Fixed
-- **Dynamic Prompt Updates**: Resolved issue where server couldn't detect file changes after startup
-  - Previously: Server only scanned directories once at startup
+- **Dynamic Prompt Updates**: Resolved issue where Amazon Q CLI didn't refresh after file changes
+  - Root cause: Missing MCP notification protocol implementation
+  - Solution: Added `notifications/prompts/list_changed` when files change
+  - Amazon Q CLI now automatically calls `prompts/list` when notified
+  - No manual refresh needed - changes appear immediately
+
+### Changed
+- **Production-Ready Defaults**: Optimized for production use
+  - Default logging level: WARNING (minimal, performance-focused)
+  - Debug features disabled by default
+  - Log file only created when debug logging is enabled
+  - Maintains backward compatibility with existing configurations
   - Now: Continuously monitors directories and updates prompt list in real-time
   - Example: Deleting `home_test.md` while server is running now removes it from `/prompts list`
 
