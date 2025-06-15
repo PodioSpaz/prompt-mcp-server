@@ -38,7 +38,7 @@ Environment Variables:
                    Default: /tmp/mcp_server_debug.log
                    Example: /path/to/custom/mcp_debug.log
 
-Version: 2.0.7
+Version: 2.0.8
 Author: Amazon Q Developer CLI Team
 """
 
@@ -83,7 +83,7 @@ class PromptMCPServer:
     """Single-file MCP server for prompt management"""
     
     def __init__(self):
-        self.version = "2.0.7"
+        self.version = "2.0.8"
         self.name = "prompt-mcp-server"
         self.prompt_directories = self._get_prompt_directories()
         self.prompts_cache = {}

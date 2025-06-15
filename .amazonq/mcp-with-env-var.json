@@ -2,7 +2,7 @@
   "mcpServers": {
     "prompt-server": {
       "command": "uvx",
-      "args": ["--from", "./dist/prompt_mcp_server-2.0.7-py3-none-any.whl", "prompt-mcp-server"],
+      "args": ["--from", "./dist/prompt_mcp_server-2.0.8-py3-none-any.whl", "prompt-mcp-server"],
       "env": {
         "PROMPTS_PATH": "~/.aws/amazonq/prompts",
         "MCP_DEBUG_LOGGING": "true",

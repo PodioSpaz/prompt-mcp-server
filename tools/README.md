@@ -1,6 +1,6 @@
 # Development Tools
 
-This directory contains development and maintenance tools for the Prompt MCP Server project (Version 2.0.7).
+This directory contains development and maintenance tools for the Prompt MCP Server project (Version 2.0.8).
 
 ## Tools Overview
 
@@ -16,7 +16,7 @@ This directory contains development and maintenance tools for the Prompt MCP Ser
 - 📤 **PyPI publishing**: Uploads to PyPI with proper authentication
 - 🔒 **Safety checks**: Prevents accidental overwrites and validates versions
 - 📊 **Detailed logging**: Comprehensive output for debugging
-- ✅ **Version 2.0.7 ready**: Supports latest features including real-time file monitoring and configurable logging
+- ✅ **Version 2.0.8 ready**: Supports latest features including real-time file monitoring and configurable logging
 
 **Usage**:
 ```bash
