@@ -150,6 +150,9 @@ class PromptMCPServer:
                     logger.info("File changes detected - clearing prompts cache")
                     self.prompts_cache.clear()
                     self.cache_timestamp = 0
+                    
+                    # SEND NOTIFICATION TO AMAZON Q CLI
+                    self._send_prompts_list_changed_notification()
                 
                 # Wait before next check
                 self.file_monitor_stop_event.wait(2.0)  # Check every 2 seconds
@@ -157,6 +160,25 @@ class PromptMCPServer:
             except Exception as e:
                 logger.error(f"Error in file monitoring: {e}")
                 self.file_monitor_stop_event.wait(5.0)  # Wait longer on error
+    
+    def _send_prompts_list_changed_notification(self):
+        """Send notification to Amazon Q CLI that prompts have changed"""
+        try:
+            notification = {
+                "jsonrpc": "2.0",
+                "method": "notifications/prompts/list_changed",
+                "params": {}
+            }
+            
+            notification_json = json.dumps(notification, separators=(',', ':'))
+            sys.stdout.write(notification_json + '\n')
+            sys.stdout.flush()
+            
+            logger.info(f"📢 SENT NOTIFICATION: prompts/list_changed")
+            logger.info(f"📢 NOTIFICATION DETAILS: {notification_json}")
+            
+        except Exception as e:
+            logger.error(f"Error sending prompts list changed notification: {e}")
     
     def _get_prompt_directories(self) -> List[Path]:
         """Get list of directories to search for prompts"""
