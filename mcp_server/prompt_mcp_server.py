@@ -350,7 +350,8 @@ class PromptMCPServer:
             except Exception as e:
                 logger.error(f"Unexpected error scanning directory {directory}: {e}")
         
-        logger.info(f"Successfully processed {len(prompts)} prompts from {total_files} files")
+        # import html
+        logger.info(f"Successfully processed {html.escape(str(len(prompts)))} prompts from {html.escape(str(total_files))} files")
         return prompts
     
     def _get_prompts(self) -> Dict[str, Dict[str, Any]]:
