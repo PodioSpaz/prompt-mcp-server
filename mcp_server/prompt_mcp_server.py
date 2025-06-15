@@ -38,9 +38,9 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any, Set, Tuple
 import logging
 
-# Configure logging - WARNING level for production
+# Configure logging - INFO level for debugging file monitoring
 logging.basicConfig(
-    level=logging.WARNING,  # Production level - only warnings and errors
+    level=logging.INFO,  # Enable detailed logging to debug file monitoring
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[logging.StreamHandler(sys.stderr)]
 )
@@ -301,14 +301,28 @@ class PromptMCPServer:
     def _get_prompts(self) -> Dict[str, Dict[str, Any]]:
         """Get prompts with caching"""
         current_time = time.time()
+        cache_age = current_time - self.cache_timestamp
+        
+        logger.info(f"=== _GET_PROMPTS CALLED ===")
+        logger.info(f"Current time: {current_time}")
+        logger.info(f"Cache timestamp: {self.cache_timestamp}")
+        logger.info(f"Cache age: {cache_age:.1f}s")
+        logger.info(f"Cache TTL: {self.cache_ttl}s")
+        logger.info(f"Cache has data: {bool(self.prompts_cache)}")
+        logger.info(f"Cache valid: {cache_age < self.cache_ttl and bool(self.prompts_cache)}")
         
         # Check if cache is still valid
-        if (current_time - self.cache_timestamp) < self.cache_ttl and self.prompts_cache:
+        if cache_age < self.cache_ttl and self.prompts_cache:
+            logger.info(f"USING CACHED DATA - {len(self.prompts_cache)} prompts")
+            logger.info(f"Cached prompt names: {list(self.prompts_cache.keys())}")
             return self.prompts_cache
         
         # Refresh cache
+        logger.info("CACHE EXPIRED OR EMPTY - RESCANNING FILES")
         self.prompts_cache = self._scan_prompts()
         self.cache_timestamp = current_time
+        logger.info(f"CACHE REFRESHED - {len(self.prompts_cache)} prompts")
+        logger.info(f"New prompt names: {list(self.prompts_cache.keys())}")
         
         logger.info(f"Scanned {len(self.prompts_cache)} prompt files from {len(self.prompt_directories)} directories")
         
@@ -348,10 +362,17 @@ class PromptMCPServer:
     
     async def handle_prompts_list(self, request: Dict[str, Any]) -> Dict[str, Any]:
         """Handle prompts/list request"""
-        logger.info("Handling prompts/list request")
+        logger.info("=== HANDLING PROMPTS/LIST REQUEST ===")
+        logger.info(f"Request ID: {request.get('id', 'no-id')}")
+        logger.info(f"Cache timestamp: {self.cache_timestamp}")
+        logger.info(f"Current time: {time.time()}")
+        logger.info(f"Cache age: {time.time() - self.cache_timestamp:.1f}s")
+        logger.info(f"Cache TTL: {self.cache_ttl}s")
+        logger.info(f"Cache valid: {time.time() - self.cache_timestamp < self.cache_ttl}")
         
         try:
             prompts = self._get_prompts()
+            logger.info(f"Retrieved {len(prompts)} prompts from _get_prompts()")
             
             prompt_list = []
             for prompt_name, prompt_info in prompts.items():
@@ -361,15 +382,20 @@ class PromptMCPServer:
                     "arguments": prompt_info["arguments"]
                 })
             
+            logger.info(f"Built prompt list with {len(prompt_list)} items")
+            logger.info(f"Prompt names: {[p['name'] for p in prompt_list]}")
             logger.info(f"Returning {len(prompt_list)} prompts")
             
-            return {
+            response = {
                 "jsonrpc": "2.0",
                 "id": request.get("id"),
                 "result": {
                     "prompts": prompt_list
                 }
             }
+            
+            logger.info(f"=== PROMPTS/LIST RESPONSE READY ===")
+            return response
             
         except Exception as e:
             logger.error(f"Error in prompts/list: {e}")
