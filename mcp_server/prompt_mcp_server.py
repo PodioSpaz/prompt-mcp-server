@@ -37,9 +37,9 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any, Set, Tuple
 import logging
 
-# Configure logging - minimal for production MCP usage
+# Configure logging - INFO level to debug Amazon Q CLI timing
 logging.basicConfig(
-    level=logging.WARNING,  # Only show warnings and errors
+    level=logging.INFO,  # Temporarily enable to see wait process
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[logging.StreamHandler(sys.stderr)]
 )
@@ -435,39 +435,44 @@ class PromptMCPServer:
                     try:
                         line = sys.stdin.readline()
                     except:
-                        # stdin might be closed, wait and retry
-                        logger.info("stdin read failed, waiting for reconnection...")
+                        # stdin might be closed, wait for potential reconnection
+                        logger.info("stdin read failed, entering extended wait mode...")
                         import time
-                        time.sleep(1)
-                        continue
+                        time.sleep(30)  # Wait 30 seconds for background tasks
+                        logger.info("Extended wait completed, shutting down")
+                        break
                     
                     # Check for EOF or empty line
                     if not line:
-                        # EOF received - Amazon Q CLI might send background requests
-                        # Wait longer before shutting down to handle background tasks
-                        logger.info("Received EOF, waiting for potential background requests...")
+                        # EOF received - Amazon Q CLI spawns background tasks that need time
+                        # Enter extended wait mode for background tasks
+                        logger.info("Received EOF, entering extended wait mode for Amazon Q CLI background tasks...")
                         
-                        # Wait up to 10 seconds for additional requests
-                        waited = 0
-                        max_wait = 10
-                        while waited < max_wait:
+                        # Amazon Q CLI background tasks can take time to spawn and execute
+                        # We need to keep the server alive but stdin is closed
+                        # So we'll wait with periodic checks
+                        import time
+                        wait_time = 30  # Wait 30 seconds total
+                        check_interval = 1  # Check every 1 second
+                        
+                        for i in range(wait_time):
+                            time.sleep(check_interval)
+                            if i % 5 == 0:  # Log every 5 seconds
+                                logger.info(f"Waiting for background tasks... ({i+1}s/{wait_time}s)")
+                            
+                            # Check if we somehow got new data (unlikely but possible)
                             try:
-                                ready, _, _ = select.select([sys.stdin], [], [], 0.5)
+                                ready, _, _ = select.select([sys.stdin], [], [], 0.1)
                                 if ready:
-                                    try:
-                                        line = sys.stdin.readline()
-                                        if line and line.strip():
-                                            # Got additional data, continue processing
-                                            logger.info("Received additional request after EOF")
-                                            break
-                                    except:
-                                        pass
-                                waited += 0.5
+                                    line = sys.stdin.readline()
+                                    if line and line.strip():
+                                        logger.info(f"Received background request after {i+1}s")
+                                        break
                             except:
-                                break
+                                pass
                         
                         if not line or not line.strip():
-                            logger.info(f"No additional requests received after {waited}s, shutting down")
+                            logger.info(f"Extended wait completed ({wait_time}s), shutting down")
                             break
                         # If we got here, we have a new line to process
                     
