@@ -37,9 +37,9 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any, Set, Tuple
 import logging
 
-# Configure logging - INFO level for debugging Amazon Q CLI issues
+# Configure logging - minimal for production MCP usage
 logging.basicConfig(
-    level=logging.INFO,  # Temporarily increase for debugging
+    level=logging.WARNING,  # Only show warnings and errors
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[logging.StreamHandler(sys.stderr)]
 )
@@ -348,17 +348,16 @@ class PromptMCPServer:
             }
     
     async def handle_tools_list(self, request: Dict[str, Any]) -> Dict[str, Any]:
-        """Handle MCP tools/list request - return error to trigger Amazon Q CLI fallback mode"""
-        logger.info("Handling tools/list request - returning error to trigger fallback")
+        """Handle MCP tools/list request - return empty result quickly"""
+        logger.info("Handling tools/list request - returning empty result")
         
-        # Amazon Q CLI works better when server is marked as "failed"
-        # Return an error for tools/list to trigger the working fallback mode
+        # Return empty tools quickly to complete initialization
+        # but don't advertise tools capability to avoid confusion
         return {
             "jsonrpc": "2.0",
             "id": request.get("id"),
-            "error": {
-                "code": -32601,
-                "message": "Method not implemented"
+            "result": {
+                "tools": []
             }
         }
     
@@ -379,6 +378,10 @@ class PromptMCPServer:
         
         if method == "initialize":
             return await self.handle_initialize(request)
+        elif method == "initialized":
+            # Notification that initialization is complete - no response needed
+            logger.info("Received initialized notification")
+            return None
         elif method == "prompts/list":
             return await self.handle_prompts_list(request)
         elif method == "prompts/get":
@@ -444,13 +447,14 @@ class PromptMCPServer:
                         # Handle request synchronously by running async handler
                         response = asyncio.run(self.handle_request(request))
                         
-                        # Write response to stdout with explicit newline and flush
-                        response_json = json.dumps(response, separators=(',', ':'))
-                        sys.stdout.write(response_json + '\n')
-                        sys.stdout.flush()
-                        
-                        # For debugging: log the request/response
-                        logger.info(f"Sent response for {request.get('method', 'unknown')} (id: {request.get('id')})")
+                        # Write response to stdout (only if response is not None)
+                        if response is not None:
+                            response_json = json.dumps(response, separators=(',', ':'))
+                            sys.stdout.write(response_json + '\n')
+                            sys.stdout.flush()
+                            
+                            # For debugging: log the request/response
+                            logger.info(f"Sent response for {request.get('method', 'unknown')} (id: {request.get('id')})")
                         
                     except json.JSONDecodeError as e:
                         logger.error(f"Invalid JSON received: {e}")
@@ -502,10 +506,11 @@ class PromptMCPServer:
                     request = json.loads(line)
                     response = await self.handle_request(request)
                     
-                    # Write response to stdout with explicit formatting
-                    response_json = json.dumps(response, separators=(',', ':'))
-                    sys.stdout.write(response_json + '\n')
-                    sys.stdout.flush()
+                    # Write response to stdout (only if response is not None)
+                    if response is not None:
+                        response_json = json.dumps(response, separators=(',', ':'))
+                        sys.stdout.write(response_json + '\n')
+                        sys.stdout.flush()
                     
                 except json.JSONDecodeError as e:
                     logger.error(f"Invalid JSON received: {e}")
