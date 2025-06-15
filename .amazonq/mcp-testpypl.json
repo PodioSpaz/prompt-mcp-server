@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "prompt-server": {
+      "command": "uvx",
+      "args": ["--index-url", "https://test.pypi.org/simple/", "prompt-mcp-server@latest"],
+      "timeout": 30000
+    }
+  }
+}

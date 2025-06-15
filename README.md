@@ -86,25 +86,6 @@ The `.amazonq/mcp.json` file configures Amazon Q to use this server:
 }
 ```
 
-#### TestPyPI Configuration (Testing)
-```json
-{
-  "mcpServers": {
-    "prompt-server": {
-      "command": "uvx",
-      "args": ["--index-url", "https://test.pypi.org/simple/", "prompt-mcp-server@latest"],
-      "env": {
-        "PROMPTS_PATH": "~/.aws/amazonq/prompts",
-        "MCP_DEBUG_LOGGING": "true",
-        "MCP_LOG_LEVEL": "DEBUG",
-        "MCP_LOG_FILE": "/tmp/mcp_server_debug.log"
-      },
-      "timeout": 30000
-    }
-  }
-}
-```
-
 #### Production Configuration (PyPI)
 ```json
 {
@@ -112,10 +93,8 @@ The `.amazonq/mcp.json` file configures Amazon Q to use this server:
     "prompt-server": {
       "command": "uvx",
       "args": ["prompt-mcp-server@latest"],
-      "env": {
-        "PROMPTS_PATH": "~/.aws/amazonq/prompts"
-      },
-      "timeout": 30000
+      "disabled": false,
+      "autoApprove": []
     }
   }
 }

@@ -3,8 +3,7 @@
     "prompt-server": {
       "command": "uvx",
       "args": ["prompt-mcp-server@latest"],
-      "disabled": false,
-      "autoApprove": []
+      "timeout": 30000
     }
   }
 }
