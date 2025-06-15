@@ -1,8 +1,8 @@
 {
   "mcpServers": {
     "prompt-server": {
-      "command": "python3",
-      "args": ["/Users/sawitmee/Code/amazon-q-developer/mcp-prompts-local/debug_mcp_wrapper.py"],
+      "command": "uvx",
+      "args": ["--from", "./dist/prompt_mcp_server-2.0.4-py3-none-any.whl", "prompt-mcp-server"],
       "timeout": 30000
     }
   }

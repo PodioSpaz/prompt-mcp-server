@@ -5,6 +5,28 @@ All notable changes to the Prompt MCP Server project will be documented in this 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.4] - 2025-06-15
+
+### Fixed
+- **CRITICAL**: Resolved Amazon Q CLI infinite loading and timeout issues
+  - Fixed "Operation timed out: recv for tools/list" error
+  - Fixed "Prompt list query failed for prompt_server" error
+  - Server now stays alive after `notifications/initialized` for background tasks
+  - Proper handling of Amazon Q CLI's asynchronous background task execution
+  - Enhanced server lifecycle management for MCP protocol compliance
+
+### Changed
+- Server persistence: Continues running after initialization to handle background requests
+- Improved Amazon Q CLI compatibility with proper background task timing
+- Enhanced error handling for stdin connection lifecycle
+- Better logging and debugging capabilities for MCP communication
+
+### Technical Details
+- Amazon Q CLI spawns background tasks after `notifications/initialized` 
+- Background tasks call `tools/list` and `prompts/list` asynchronously
+- Server must remain alive to handle these delayed requests
+- Fixed race condition between server shutdown and background task execution
+
 ## [2.0.3] - 2025-06-15
 
 ### Security

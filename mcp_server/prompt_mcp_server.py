@@ -37,9 +37,9 @@ from pathlib import Path
 from typing import Dict, List, Optional, Any, Set, Tuple
 import logging
 
-# Configure logging - INFO level to debug Amazon Q CLI timing
+# Configure logging - WARNING level for production
 logging.basicConfig(
-    level=logging.INFO,  # Temporarily enable to see wait process
+    level=logging.WARNING,  # Production level - only warnings and errors
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[logging.StreamHandler(sys.stderr)]
 )
@@ -49,7 +49,7 @@ class PromptMCPServer:
     """Single-file MCP server for prompt management"""
     
     def __init__(self):
-        self.version = "2.0.3"
+        self.version = "2.0.4"
         self.name = "prompt-mcp-server"
         self.prompt_directories = self._get_prompt_directories()
         self.prompts_cache = {}
