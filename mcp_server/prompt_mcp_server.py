@@ -238,7 +238,9 @@ class PromptMCPServer:
                 "capabilities": {
                     "prompts": {
                         "listChanged": True
-                    }
+                    },
+                    "tools": {},
+                    "resources": {}
                 },
                 "serverInfo": {
                     "name": self.name,
