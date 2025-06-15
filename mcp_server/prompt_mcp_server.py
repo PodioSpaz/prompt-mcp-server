@@ -432,12 +432,44 @@ class PromptMCPServer:
                         continue
                     
                     # Read JSON-RPC request from stdin
-                    line = sys.stdin.readline()
+                    try:
+                        line = sys.stdin.readline()
+                    except:
+                        # stdin might be closed, wait and retry
+                        logger.info("stdin read failed, waiting for reconnection...")
+                        import time
+                        time.sleep(1)
+                        continue
                     
                     # Check for EOF or empty line
                     if not line:
-                        logger.info("Received EOF, shutting down")
-                        break
+                        # EOF received - Amazon Q CLI might send background requests
+                        # Wait longer before shutting down to handle background tasks
+                        logger.info("Received EOF, waiting for potential background requests...")
+                        
+                        # Wait up to 10 seconds for additional requests
+                        waited = 0
+                        max_wait = 10
+                        while waited < max_wait:
+                            try:
+                                ready, _, _ = select.select([sys.stdin], [], [], 0.5)
+                                if ready:
+                                    try:
+                                        line = sys.stdin.readline()
+                                        if line and line.strip():
+                                            # Got additional data, continue processing
+                                            logger.info("Received additional request after EOF")
+                                            break
+                                    except:
+                                        pass
+                                waited += 0.5
+                            except:
+                                break
+                        
+                        if not line or not line.strip():
+                            logger.info(f"No additional requests received after {waited}s, shutting down")
+                            break
+                        # If we got here, we have a new line to process
                     
                     line = line.strip()
                     if not line:
