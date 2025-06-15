@@ -72,6 +72,8 @@ echo '{"jsonrpc": "2.0", "id": 1, "method": "initialize"}' | uvx --from ./dist/p
 
 ### Workspace Configuration
 The `.amazonq/mcp.json` file configures Amazon Q to use this server:
+
+#### Development Configuration (Local)
 ```json
 {
   "mcpServers": {
@@ -79,6 +81,41 @@ The `.amazonq/mcp.json` file configures Amazon Q to use this server:
       "command": "python3",
       "args": ["mcp_server/prompt_mcp_server.py"],
       "timeout": 10000
+    }
+  }
+}
+```
+
+#### TestPyPI Configuration (Testing)
+```json
+{
+  "mcpServers": {
+    "prompt-server": {
+      "command": "uvx",
+      "args": ["--index-url", "https://test.pypi.org/simple/", "prompt-mcp-server@latest"],
+      "env": {
+        "PROMPTS_PATH": "~/.aws/amazonq/prompts",
+        "MCP_DEBUG_LOGGING": "true",
+        "MCP_LOG_LEVEL": "DEBUG",
+        "MCP_LOG_FILE": "/tmp/mcp_server_debug.log"
+      },
+      "timeout": 30000
+    }
+  }
+}
+```
+
+#### Production Configuration (PyPI)
+```json
+{
+  "mcpServers": {
+    "prompt-server": {
+      "command": "uvx",
+      "args": ["prompt-mcp-server@latest"],
+      "env": {
+        "PROMPTS_PATH": "~/.aws/amazonq/prompts"
+      },
+      "timeout": 30000
     }
   }
 }
