@@ -1,232 +1,24 @@
 {
-  "mcp_environment_variables": {
-    "version": "2.0.7",
-    "description": "Environment variables supported by the MCP Prompt Server for Amazon Q CLI",
-    "variables": {
-      "PROMPTS_PATH": {
-        "purpose": "Specify custom directories to search for prompt files",
-        "type": "string",
-        "format": "colon-separated paths (Unix/Linux/macOS) or semicolon-separated (Windows)",
-        "default": "~/.aws/amazonq/prompts",
-        "required": false,
-        "examples": [
-          "/home/user/prompts:/opt/shared/prompts",
-          "~/my-prompts:~/team-prompts",
-          "/path/to/project/prompts"
-        ],
-        "notes": [
-          "Multiple directories are supported",
-          "Paths are searched in order",
-          "Supports both absolute and relative paths",
-          "Tilde (~) expansion is supported"
-        ]
-      },
-      "MCP_LOG_LEVEL": {
-        "purpose": "Set the logging level for the MCP server",
-        "type": "string",
-        "format": "logging level name",
-        "default": "WARNING",
-        "required": false,
-        "valid_values": [
-          "DEBUG",
-          "INFO", 
-          "WARNING",
-          "ERROR",
-          "CRITICAL"
-        ],
-        "examples": [
-          "DEBUG",
-          "INFO",
-          "WARNING"
-        ],
-        "notes": [
-          "Case-insensitive",
-          "WARNING level shows only warnings and errors (production-safe)",
-          "INFO level shows detailed operational information",
-          "DEBUG level shows all internal operations"
-        ]
-      },
-      "MCP_DEBUG_LOGGING": {
-        "purpose": "Enable comprehensive debug logging with detailed request/response tracing",
-        "type": "boolean",
-        "format": "boolean flag",
-        "default": false,
-        "required": false,
-        "valid_values": [
-          "1",
-          "true",
-          "yes", 
-          "on"
-        ],
-        "examples": [
-          "1",
-          "true",
-          "yes",
-          "on"
-        ],
-        "when_enabled": {
-          "log_level": "Forces INFO level logging regardless of MCP_LOG_LEVEL",
-          "log_file": "Creates debug log file for monitoring",
-          "features": [
-            "Logs all MCP requests with full JSON details",
-            "Logs all MCP responses with full JSON details", 
-            "Logs file monitoring activity and changes",
-            "Logs cache operations and timing",
-            "Color-coded log messages with emojis",
-            "Raw request/response logging at transport level"
-          ]
-        },
-        "notes": [
-          "Case-insensitive",
-          "Only creates log file when enabled",
-          "Provides comprehensive debugging information",
-          "Should be disabled in production for performance"
-        ]
-      },
-      "MCP_LOG_FILE": {
-        "purpose": "Set custom path for the debug log file",
-        "type": "string",
-        "format": "file path",
-        "default": "/tmp/mcp_server_debug.log",
-        "required": false,
-        "dependency": "Only used when MCP_DEBUG_LOGGING is enabled",
-        "examples": [
-          "/var/log/mcp_debug.log",
-          "~/logs/mcp_server.log",
-          "/custom/path/debug.log",
-          "./mcp_debug.log"
-        ],
-        "notes": [
-          "Must be a writable file path",
-          "Directory must exist or be creatable",
-          "Supports absolute and relative paths",
-          "Tilde (~) expansion is supported",
-          "File is created/overwritten when server starts"
-        ]
-      }
+  "environment_variables": {
+    "PROMPTS_PATH": {
+      "purpose": "Custom prompt directories",
+      "default": "~/.aws/amazonq/prompts",
+      "example": "/path1:/path2"
     },
-    "usage_scenarios": {
-      "production": {
-        "description": "Minimal logging for production use",
-        "environment": {},
-        "command": "q chat",
-        "log_output": "stderr (warnings and errors only)"
-      },
-      "development": {
-        "description": "Enhanced logging for development",
-        "environment": {
-          "MCP_LOG_LEVEL": "INFO"
-        },
-        "command": "q chat",
-        "log_output": "stderr (detailed operational info)"
-      },
-      "debugging": {
-        "description": "Comprehensive debugging with log file",
-        "environment": {
-          "MCP_DEBUG_LOGGING": "1"
-        },
-        "command": "q chat",
-        "log_output": "stderr + /tmp/mcp_server_debug.log",
-        "monitoring": "tail -f /tmp/mcp_server_debug.log"
-      },
-      "custom_debugging": {
-        "description": "Debugging with custom log file location",
-        "environment": {
-          "MCP_DEBUG_LOGGING": "1",
-          "MCP_LOG_FILE": "/custom/path/debug.log"
-        },
-        "command": "q chat", 
-        "log_output": "stderr + /custom/path/debug.log",
-        "monitoring": "tail -f /custom/path/debug.log"
-      },
-      "custom_prompts": {
-        "description": "Using custom prompt directories",
-        "environment": {
-          "PROMPTS_PATH": "/project/prompts:/shared/prompts"
-        },
-        "command": "q chat",
-        "log_output": "stderr (warnings and errors only)"
-      },
-      "full_custom": {
-        "description": "All customizations enabled",
-        "environment": {
-          "PROMPTS_PATH": "/custom/prompts:/shared/prompts",
-          "MCP_LOG_LEVEL": "INFO",
-          "MCP_DEBUG_LOGGING": "1", 
-          "MCP_LOG_FILE": "/logs/mcp_debug.log"
-        },
-        "command": "q chat",
-        "log_output": "stderr + /logs/mcp_debug.log",
-        "monitoring": "tail -f /logs/mcp_debug.log"
-      }
+    "MCP_LOG_LEVEL": {
+      "purpose": "Set logging level",
+      "default": "WARNING",
+      "values": ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
     },
-    "debug_log_features": {
-      "request_logging": {
-        "description": "All incoming MCP requests logged with full details",
-        "format": "🔵 INCOMING REQUEST: method='prompts/list', id=1",
-        "includes": ["method", "id", "params", "full JSON"]
-      },
-      "response_logging": {
-        "description": "All outgoing MCP responses logged with full details", 
-        "format": "🟢 OUTGOING RESPONSE: method='prompts/list', id=1",
-        "includes": ["result", "error", "full JSON"]
-      },
-      "transport_logging": {
-        "description": "Raw transport-level request/response logging",
-        "format": "📥 RAW REQUEST RECEIVED / 📤 RAW RESPONSE SENT",
-        "includes": ["raw JSON strings", "transport timing"]
-      },
-      "file_monitoring": {
-        "description": "File system monitoring and change detection",
-        "format": "Detected removed prompt files: ['test.md']",
-        "includes": ["file changes", "cache invalidation", "notifications"]
-      },
-      "cache_operations": {
-        "description": "Cache operations and timing information",
-        "format": "CACHE EXPIRED OR EMPTY - RESCANNING FILES",
-        "includes": ["cache hits/misses", "refresh timing", "prompt counts"]
-      },
-      "notifications": {
-        "description": "MCP notifications sent to Amazon Q CLI",
-        "format": "📢 SENT NOTIFICATION: prompts/list_changed",
-        "includes": ["notification type", "timing", "full JSON"]
-      }
+    "MCP_DEBUG_LOGGING": {
+      "purpose": "Enable comprehensive debug logging",
+      "default": "disabled",
+      "values": ["1", "true", "yes", "on"]
     },
-    "troubleshooting": {
-      "common_issues": {
-        "prompts_not_found": {
-          "symptoms": ["Empty prompt list", "Prompts not appearing"],
-          "debug_steps": [
-            "Set MCP_DEBUG_LOGGING=1",
-            "Check PROMPTS_PATH is correct",
-            "Verify .md files exist in prompt directories",
-            "Check file permissions"
-          ]
-        },
-        "file_changes_not_detected": {
-          "symptoms": ["Prompt changes not reflected", "Manual refresh needed"],
-          "debug_steps": [
-            "Set MCP_DEBUG_LOGGING=1", 
-            "Look for 'Detected ... prompt files' messages",
-            "Check for 'SENT NOTIFICATION: prompts/list_changed'",
-            "Verify file system supports change notifications"
-          ]
-        },
-        "performance_issues": {
-          "symptoms": ["Slow prompt loading", "High CPU usage"],
-          "debug_steps": [
-            "Check number of files in prompt directories",
-            "Review cache hit/miss ratios in debug logs",
-            "Consider reducing file monitoring frequency"
-          ]
-        }
-      }
-    },
-    "compatibility": {
-      "platforms": ["Linux", "macOS", "Windows"],
-      "amazon_q_cli": "All versions supporting MCP",
-      "python": "3.8+",
-      "file_systems": ["ext4", "APFS", "NTFS", "ZFS"]
+    "MCP_LOG_FILE": {
+      "purpose": "Custom debug log file path",
+      "default": "/tmp/mcp_server_debug.log",
+      "example": "/custom/path/debug.log"
     }
   }
 }
