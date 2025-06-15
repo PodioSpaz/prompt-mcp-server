@@ -1,8 +1,8 @@
-# MCP Server Testing Guide (Version 2.0.8)
+# MCP Server Testing Guide (Version 2.0.9)
 
 This directory contains the test configuration and tools for testing the MCP server with Amazon Q CLI.
 
-## Version 2.0.8 Features
+## Version 2.0.9 Features
 
 ✅ **Real-time File Monitoring**: Test dynamic prompt updates
 ✅ **MCP Notifications**: Verify automatic Amazon Q CLI refresh
@@ -21,7 +21,7 @@ This is the MCP configuration file that Amazon Q CLI will use when running from 
   "mcpServers": {
     "prompt-server": {
       "command": "uvx",
-      "args": ["--from", "../dist/prompt_mcp_server-2.0.8-py3-none-any.whl", "prompt-mcp-server"],
+      "args": ["--from", "../dist/prompt_mcp_server-2.0.9-py3-none-any.whl", "prompt-mcp-server"],
       "timeout": 30000
     }
   }
@@ -30,10 +30,10 @@ This is the MCP configuration file that Amazon Q CLI will use when running from 
 
 This configuration:
 
-- Uses UVX with the built wheel package for testing (Version 2.0.8)
+- Uses UVX with the built wheel package for testing (Version 2.0.9)
 - Points to the server wheel file relative to the tests directory
 - Sets a 30-second timeout for server responses (increased for file monitoring)
-- Supports all Version 2.0.8 features including real-time updates
+- Supports all Version 2.0.9 features including real-time updates
 
 ## Testing the MCP Server
 

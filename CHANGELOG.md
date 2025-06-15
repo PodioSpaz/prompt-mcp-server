@@ -5,6 +5,27 @@ All notable changes to the Prompt MCP Server project will be documented in this 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.9] - 2025-06-15
+
+### Added
+- **Security Improvements**: Enhanced security fixes and validations
+  - Path traversal vulnerability fixes
+  - File size limit improvements
+  - Input validation enhancements
+  - Error message sanitization
+
+### Fixed
+- **Security Vulnerabilities**: Addressed high-priority security issues identified in security scan
+  - Improved path validation and sanitization
+  - Enhanced file access controls
+  - Better error handling and logging security
+
+### Changed
+- **Security Hardening**: Production-ready security improvements
+  - Stricter input validation
+  - Enhanced logging security
+  - Improved resource management
+
 ## [2.0.8] - 2025-06-15
 
 ### Added

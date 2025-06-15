@@ -1,6 +1,6 @@
 # Test Suite Documentation
 
-Comprehensive testing documentation for the Prompt MCP Server project (Version 2.0.8).
+Comprehensive testing documentation for the Prompt MCP Server project (Version 2.0.9).
 
 ## Overview
 
@@ -10,7 +10,7 @@ This test suite provides comprehensive coverage of the Prompt MCP Server with mu
 - **8 UVX Integration Tests** - Package distribution testing
 - **MCP Integration Tests** - Protocol compliance and connection testing
 
-## Version 2.0.8 Features Tested
+## Version 2.0.9 Features Tested
 
 ✅ **Real-time File Monitoring with MCP Notifications**
 - File change detection and monitoring
@@ -38,7 +38,7 @@ Comprehensive test execution results are stored in the `results/` directory:
 - **`results/FINAL_TEST_RESULTS.md`**: Final test results (100% success)
 - **`results/README.md`**: Detailed documentation of all test results
 
-### Current Status: ✅ All Tests Passing (Version 2.0.8)
+### Current Status: ✅ All Tests Passing (Version 2.0.9)
 - Unit Tests: 31/31 ✅
 - Functional Tests: 14/14 ✅
 - UVX Integration Tests: 8/8 ✅

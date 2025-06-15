@@ -38,7 +38,7 @@ Environment Variables:
                    Default: /tmp/mcp_server_debug.log
                    Example: /path/to/custom/mcp_debug.log
 
-Version: 2.0.8
+Version: 2.0.9
 Author: Amazon Q Developer CLI Team
 """
 
@@ -83,7 +83,7 @@ class PromptMCPServer:
     """Single-file MCP server for prompt management"""
     
     def __init__(self):
-        self.version = "2.0.8"
+        self.version = "2.0.9"
         self.name = "prompt-mcp-server"
         self.prompt_directories = self._get_prompt_directories()
         self.prompts_cache = {}
@@ -350,8 +350,7 @@ class PromptMCPServer:
             except Exception as e:
                 logger.error(f"Unexpected error scanning directory {directory}: {e}")
         
-        # import html
-        logger.info(f"Successfully processed {html.escape(str(len(prompts)))} prompts from {html.escape(str(total_files))} files")
+        logger.info(f"Successfully processed {len(prompts)} prompts from {total_files} files")
         return prompts
     
     def _get_prompts(self) -> Dict[str, Dict[str, Any]]:
