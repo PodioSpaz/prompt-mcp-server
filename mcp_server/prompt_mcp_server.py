@@ -49,7 +49,7 @@ class PromptMCPServer:
     """Single-file MCP server for prompt management"""
     
     def __init__(self):
-        self.version = "2.0.5"
+        self.version = "2.0.6"
         self.name = "prompt-mcp-server"
         self.prompt_directories = self._get_prompt_directories()
         self.prompts_cache = {}
