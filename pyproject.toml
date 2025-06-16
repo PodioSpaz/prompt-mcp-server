@@ -43,11 +43,11 @@ test = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/amazon-q-developer/prompt-mcp-server"
-Repository = "https://github.com/amazon-q-developer/prompt-mcp-server"
-Issues = "https://github.com/amazon-q-developer/prompt-mcp-server/issues"
-Documentation = "https://github.com/amazon-q-developer/prompt-mcp-server#readme"
-Changelog = "https://github.com/amazon-q-developer/prompt-mcp-server/releases"
+Homepage = "https://github.com/peepeepopapapeepeepo/prompt-mcp-server"
+Repository = "https://github.com/peepeepopapapeepeepo/prompt-mcp-server"
+Issues = "https://github.com/peepeepopapapeepeepo/prompt-mcp-server/issues"
+Documentation = "https://github.com/peepeepopapapeepeepo/prompt-mcp-server#readme"
+Changelog = "https://github.com/peepeepopapapeepeepo/prompt-mcp-server/releases"
 
 [project.scripts]
 prompt-mcp-server = "mcp_server.mcp_wrapper:main"
