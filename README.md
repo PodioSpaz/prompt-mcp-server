@@ -10,6 +10,7 @@ A single-file Model Context Protocol (MCP) server for Amazon Q Developer CLI tha
 - **🏠 Default Directory**: `~/.aws/amazonq/prompts` (created automatically)
 - **🎯 Custom Directories**: Override with `PROMPTS_PATH` environment variable (PATH-like format)
 - **🔧 Variable Substitution**: Supports `{variable}` placeholders in prompts
+- **📝 YAML Frontmatter**: Optional frontmatter for explicit metadata and argument control
 - **🔍 Configurable Logging**: Production-safe defaults with comprehensive debug mode
 - **🌐 Cross-Platform**: Works on Unix/Linux/macOS (Windows compatible)
 - **⚡ Error Handling**: Comprehensive error handling and logging
@@ -241,6 +242,69 @@ Requirements:
 - Include error handling
 - Add comprehensive tests
 ```
+
+### YAML Frontmatter Support
+
+You can add optional YAML frontmatter to prompt files for enhanced control over metadata and arguments:
+
+#### Basic Frontmatter
+```markdown
+---
+name: "custom-name"
+title: "Display Title"
+description: "Detailed description of the prompt"
+---
+
+# Prompt Content
+
+Your prompt content with {variables}.
+```
+
+#### Frontmatter with Explicit Arguments
+```markdown
+---
+name: "code-reviewer"
+title: "Advanced Code Review Assistant"
+description: "Performs comprehensive code review with security analysis"
+arguments:
+  - name: "code"
+    description: "Source code to review"
+    required: true
+  - name: "language"
+    description: "Programming language"
+    default: "Python"
+  - name: "focus"
+    description: "Review focus area"
+    default: "security"
+---
+
+Analyze the following {language} code with focus on {focus}:
+
+{code}
+```
+
+#### Frontmatter Fields
+
+- **`name`** (optional): Custom prompt identifier (default: filename without extension)
+- **`title`** (optional): Display title for the prompt (default: value of `description` or first heading)
+- **`description`** (optional): Detailed prompt description (default: value of `title` or first heading)
+- **`arguments`** (optional): Explicit argument definitions (default: auto-discovered from `{variable}` placeholders)
+
+#### Argument Object Fields
+
+- **`name`** (required): Parameter identifier
+- **`description`** (required): Parameter explanation
+- **`default`** (optional): Default value (makes argument optional)
+- **`required`** (optional): Explicit required flag (defaults to `true` if no `default`)
+
+#### Backward Compatibility
+
+Files without frontmatter work exactly as before:
+- Filename → name
+- First heading → title/description
+- Auto-discovered `{variables}` → required arguments
+
+No breaking changes - existing prompt files continue to work unchanged.
 
 ## Usage Examples
 

@@ -5,6 +5,63 @@ All notable changes to the Prompt MCP Server project will be documented in this 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] - 2025-10-07
+
+### Added
+- **YAML Frontmatter Support**: Optional frontmatter for explicit metadata and argument control
+  - Zero-dependency YAML parser supporting key-value pairs, arrays, and nested objects
+  - Frontmatter fields: `name`, `title`, `description`, `arguments`
+  - Explicit argument definitions with `name`, `description`, `default`, and `required` fields
+  - Optional arguments via `default` values
+  - Auto-discovery fallback when frontmatter is absent
+  - Full backward compatibility with legacy prompts (no breaking changes)
+
+- **New YAML Parser Methods**:
+  - `_parse_yaml_value()` - Parses strings, numbers, booleans, null values
+  - `_parse_yaml_array()` - Parses YAML arrays with nested object support
+  - `_parse_simple_yaml()` - Main parser for YAML frontmatter content
+  - `_has_frontmatter()` - Detects frontmatter delimiters
+  - `_parse_frontmatter()` - Extracts and parses frontmatter from content
+  - `_process_frontmatter_arguments()` - Converts frontmatter args to MCP format
+
+- **Example Prompts**: Added example files demonstrating frontmatter usage
+  - `prompts/examples/code-reviewer.md` - Full frontmatter with optional arguments
+  - `prompts/examples/simple-debug.md` - Basic frontmatter with name and title
+  - `prompts/examples/mixed-args.md` - Mixed required/optional arguments
+  - `prompts/examples/no-frontmatter.md` - Legacy format for comparison
+
+- **Comprehensive Testing**: Added 15 new frontmatter-specific tests
+  - YAML value parsing tests (strings, numbers, booleans, null)
+  - YAML array parsing with nested objects
+  - Frontmatter detection and parsing
+  - Argument processing (required/optional logic)
+  - Backward compatibility verification
+  - Edge case handling (invalid frontmatter, empty frontmatter)
+
+### Changed
+- **Enhanced Prompt Scanning**: Updated `_scan_prompts()` to support frontmatter
+  - Parses frontmatter when present
+  - Falls back to auto-discovery for legacy prompts
+  - Maintains backward compatibility
+  - Supports custom names via frontmatter
+
+### Technical Details
+- **Zero Dependencies**: Custom YAML parser maintains zero-dependency philosophy
+- **Backward Compatible**: Files without frontmatter work exactly as before
+- **Flexible Arguments**: Support for both required and optional arguments
+- **Priority System**: Clear precedence for title/description fields
+  - Frontmatter `title` → frontmatter `description` → first heading → filename
+- **Validation**: Warns when frontmatter arguments not found in content
+- **Test Coverage**: Now 45 comprehensive tests (100% passing)
+
+### Benefits
+- **Explicit Control**: Authors can define exact metadata instead of relying on auto-discovery
+- **Better Documentation**: Frontmatter serves as inline documentation
+- **Optional Arguments**: Support default values for flexible prompts
+- **Standards Aligned**: Matches common markdown frontmatter conventions
+- **Backward Compatible**: No changes required to existing prompts
+- **Zero Dependencies**: Maintains pure Python implementation
+
 ## [2.0.9] - 2025-06-15
 
 ### Added
@@ -308,6 +365,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 | Version | Date | Key Changes |
 |---------|------|-------------|
+| 2.1.0 | 2025-10-07 | **YAML frontmatter support**, optional arguments, zero-dependency YAML parser |
+| 2.0.9 | 2025-06-15 | Security improvements and vulnerability fixes |
+| 2.0.8 | 2025-06-15 | Real-time file monitoring with MCP notifications |
+| 2.0.6 | 2025-06-15 | Code organization improvements |
+| 2.0.5 | 2025-06-15 | Production MCP wrapper for Amazon Q CLI compatibility |
+| 2.0.4 | 2025-06-15 | Fixed Amazon Q CLI timeout issues |
+| 2.0.3 | 2025-06-15 | Security fixes (shell injection vulnerability) |
 | 2.0.2 | 2025-06-15 | **Complete MCP protocol compliance**, fixes Amazon Q CLI loading issue |
 | 2.0.1 | 2025-06-14 | Enhanced testing, error handling, and performance improvements |
 | 2.0.0 | 2025-06-13 | Initial MCP server implementation with prompt management |

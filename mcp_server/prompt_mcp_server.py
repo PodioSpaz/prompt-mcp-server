@@ -38,7 +38,7 @@ Environment Variables:
                    Default: /tmp/mcp_server_debug.log
                    Example: /path/to/custom/mcp_debug.log
 
-Version: 2.0.9
+Version: 2.1.0
 Author: Amazon Q Developer CLI Team
 """
 
@@ -81,9 +81,9 @@ logger = logging.getLogger(__name__)
 
 class PromptMCPServer:
     """Single-file MCP server for prompt management"""
-    
+
     def __init__(self):
-        self.version = "2.0.9"
+        self.version = "2.1.0"
         self.name = "prompt-mcp-server"
         self.prompt_directories = self._get_prompt_directories()
         self.prompts_cache = {}
@@ -253,7 +253,254 @@ class PromptMCPServer:
             fallback_dir.mkdir(exist_ok=True)
             logger.info(f"Using fallback directory: {fallback_dir}")
             return [fallback_dir]
-    
+
+    def _parse_yaml_value(self, value: str) -> Any:
+        """Parse a simple YAML value (string, number, boolean, null)"""
+        value = value.strip()
+
+        # Handle null
+        if value in ('null', 'Null', 'NULL', '~', ''):
+            return None
+
+        # Handle booleans
+        if value in ('true', 'True', 'TRUE'):
+            return True
+        if value in ('false', 'False', 'FALSE'):
+            return False
+
+        # Handle quoted strings
+        if (value.startswith('"') and value.endswith('"')) or \
+           (value.startswith("'") and value.endswith("'")):
+            return value[1:-1]
+
+        # Handle numbers
+        try:
+            if '.' in value:
+                return float(value)
+            return int(value)
+        except ValueError:
+            pass
+
+        # Default to string
+        return value
+
+    def _parse_yaml_array(self, lines: List[str], start_idx: int, indent_level: int) -> Tuple[List[Any], int]:
+        """
+        Parse a YAML array starting at start_idx.
+        Returns (array, next_line_index)
+        """
+        array = []
+        i = start_idx
+
+        while i < len(lines):
+            line = lines[i]
+            stripped = line.lstrip()
+
+            # Calculate indentation
+            current_indent = len(line) - len(stripped)
+
+            # If indentation decreased, we're done with this array
+            if current_indent < indent_level:
+                break
+
+            # Skip if not at our indentation level
+            if current_indent > indent_level and not stripped.startswith('-'):
+                i += 1
+                continue
+
+            # Array item
+            if stripped.startswith('- '):
+                item_content = stripped[2:].strip()
+
+                # Check if this is a nested object
+                if ':' in item_content:
+                    # This is an inline key-value or start of object
+                    obj = {}
+                    parts = item_content.split(':', 1)
+                    key = parts[0].strip()
+                    value = parts[1].strip() if len(parts) > 1 else ''
+
+                    if value:
+                        obj[key] = self._parse_yaml_value(value)
+
+                    # Check for continuation of object on next lines
+                    i += 1
+                    while i < len(lines):
+                        next_line = lines[i]
+                        next_stripped = next_line.lstrip()
+                        next_indent = len(next_line) - len(next_stripped)
+
+                        # Must be more indented than the '-' and contain ':'
+                        if next_indent > current_indent and ':' in next_stripped:
+                            obj_parts = next_stripped.split(':', 1)
+                            obj_key = obj_parts[0].strip()
+                            obj_value = obj_parts[1].strip() if len(obj_parts) > 1 else ''
+                            obj[obj_key] = self._parse_yaml_value(obj_value)
+                            i += 1
+                        else:
+                            break
+
+                    array.append(obj)
+                    continue
+                else:
+                    # Simple value
+                    array.append(self._parse_yaml_value(item_content))
+                    i += 1
+            else:
+                # Not an array item at our level, we're done
+                break
+
+        return array, i
+
+    def _parse_simple_yaml(self, yaml_content: str) -> Dict[str, Any]:
+        """
+        Parse simple YAML content (zero-dependency implementation).
+        Supports:
+        - Simple key: value pairs
+        - Quoted strings
+        - Arrays with - items
+        - Nested objects in arrays (for arguments)
+        """
+        result = {}
+        lines = yaml_content.split('\n')
+        i = 0
+
+        while i < len(lines):
+            line = lines[i]
+            stripped = line.lstrip()
+
+            # Skip empty lines and comments
+            if not stripped or stripped.startswith('#'):
+                i += 1
+                continue
+
+            # Calculate indentation
+            indent = len(line) - len(stripped)
+
+            # Only process root level (indent 0)
+            if indent > 0:
+                i += 1
+                continue
+
+            # Key-value pair
+            if ':' in stripped:
+                parts = stripped.split(':', 1)
+                key = parts[0].strip()
+                value = parts[1].strip() if len(parts) > 1 else ''
+
+                if value:
+                    # Inline value
+                    result[key] = self._parse_yaml_value(value)
+                    i += 1
+                else:
+                    # Check next line for array or nested content
+                    if i + 1 < len(lines):
+                        next_line = lines[i + 1]
+                        next_stripped = next_line.lstrip()
+                        next_indent = len(next_line) - len(next_stripped)
+
+                        # Array
+                        if next_stripped.startswith('-'):
+                            array, next_i = self._parse_yaml_array(lines, i + 1, next_indent)
+                            result[key] = array
+                            i = next_i
+                            continue
+
+                    # Empty value
+                    result[key] = None
+                    i += 1
+            else:
+                i += 1
+
+        return result
+
+    def _has_frontmatter(self, content: str) -> bool:
+        """Check if content starts with YAML frontmatter delimiters"""
+        return content.strip().startswith('---\n') or content.strip().startswith('---\r\n')
+
+    def _parse_frontmatter(self, content: str) -> Tuple[Optional[Dict[str, Any]], str]:
+        """
+        Parse YAML frontmatter from markdown content.
+
+        Returns:
+            (frontmatter_dict, remaining_content) if frontmatter exists
+            (None, original_content) if no frontmatter
+        """
+        if not self._has_frontmatter(content):
+            return None, content
+
+        try:
+            # Split on frontmatter delimiters
+            # First split to handle the opening ---
+            parts = content.split('---', 2)
+
+            if len(parts) < 3:
+                # Invalid frontmatter (no closing delimiter)
+                logger.warning("Invalid frontmatter: missing closing delimiter")
+                return None, content
+
+            # parts[0] is empty (before first ---), parts[1] is YAML, parts[2] is content
+            yaml_content = parts[1].strip()
+            remaining_content = parts[2].strip()
+
+            if not yaml_content:
+                # Empty frontmatter
+                logger.warning("Empty frontmatter found")
+                return {}, remaining_content
+
+            # Parse YAML
+            frontmatter = self._parse_simple_yaml(yaml_content)
+
+            logger.info(f"Parsed frontmatter: {frontmatter}")
+            return frontmatter, remaining_content
+
+        except Exception as e:
+            logger.warning(f"Failed to parse frontmatter: {e}")
+            return None, content
+
+    def _process_frontmatter_arguments(self, frontmatter_args: List[Dict[str, Any]], content: str) -> List[Dict[str, Any]]:
+        """
+        Process arguments from frontmatter into MCP argument format.
+        Validates that arguments exist in content.
+        """
+        processed_args = []
+
+        for arg in frontmatter_args:
+            if not isinstance(arg, dict):
+                logger.warning(f"Invalid argument format in frontmatter: {arg}")
+                continue
+
+            name = arg.get('name')
+            if not name:
+                logger.warning("Argument missing 'name' field in frontmatter")
+                continue
+
+            description = arg.get('description', f'Value for {name}')
+            default = arg.get('default')
+
+            # Determine if required
+            # If 'required' is explicitly set, use that
+            # Otherwise, required = True if no default value
+            if 'required' in arg:
+                required = bool(arg['required'])
+            else:
+                required = (default is None)
+
+            # Validate that variable exists in content
+            placeholder = f'{{{name}}}'
+            if placeholder not in content:
+                logger.warning(f"Argument '{name}' defined in frontmatter but not found in content")
+
+            processed_arg = {
+                'name': name,
+                'description': description,
+                'required': required
+            }
+
+            processed_args.append(processed_arg)
+
+        return processed_args
+
     def _scan_prompts(self) -> Dict[str, Dict[str, Any]]:
         """Scan directories for prompt files with comprehensive error handling"""
         prompts = {}
@@ -300,40 +547,95 @@ class PromptMCPServer:
                         if not content.strip():
                             logger.warning(f"File has no content: {md_file}")
                             continue
-                        
-                        # Extract title from first line or filename
-                        lines = content.strip().split('\n')
-                        title = lines[0].lstrip('#').strip() if lines and lines[0].startswith('#') else md_file.stem
-                        
-                        # Find variables in content (e.g., {variable})
-                        try:
-                            variables = list(set(re.findall(r'\{([^}]+)\}', content)))
-                        except re.error as e:
-                            logger.error(f"Regex error in file {md_file}: {e}")
-                            variables = []
-                        
-                        # Create prompt info
-                        prompt_name = md_file.stem
-                        
-                        # Handle duplicate prompt names
-                        if prompt_name in prompts:
-                            logger.warning(f"Duplicate prompt name '{prompt_name}' found in {md_file}, skipping")
-                            continue
-                        
-                        prompts[prompt_name] = {
-                            'name': prompt_name,
-                            'description': title[:200],  # Limit description length
-                            'content': content,
-                            'file_path': str(md_file),
-                            'variables': variables,
-                            'arguments': [
+
+                        # Parse frontmatter
+                        frontmatter, content_body = self._parse_frontmatter(content)
+
+                        # Determine prompt metadata
+                        if frontmatter:
+                            # Use frontmatter values with fallbacks
+                            prompt_name = frontmatter.get('name', md_file.stem)
+
+                            # Title/description priority:
+                            # 1. frontmatter 'title'
+                            # 2. frontmatter 'description'
+                            # 3. first heading in content_body
+                            # 4. filename
+                            title = frontmatter.get('title')
+                            description = frontmatter.get('description')
+
+                            if not title and not description:
+                                # Extract from content_body
+                                lines = content_body.strip().split('\n')
+                                first_heading = lines[0].lstrip('#').strip() if lines and lines[0].startswith('#') else md_file.stem
+                                title = first_heading
+                                description = first_heading
+                            elif title and not description:
+                                description = title
+                            elif description and not title:
+                                title = description
+
+                            # Handle explicit arguments from frontmatter
+                            if 'arguments' in frontmatter and frontmatter['arguments']:
+                                arguments = self._process_frontmatter_arguments(
+                                    frontmatter['arguments'],
+                                    content_body
+                                )
+                                variables = [arg['name'] for arg in arguments]
+                            else:
+                                # Fall back to auto-discovery from content_body
+                                try:
+                                    variables = list(set(re.findall(r'\{([^}]+)\}', content_body)))
+                                except re.error as e:
+                                    logger.error(f"Regex error in file {md_file}: {e}")
+                                    variables = []
+
+                                arguments = [
+                                    {
+                                        'name': var,
+                                        'description': f'Value for {var}',
+                                        'required': True
+                                    }
+                                    for var in variables if var.isalnum() or '_' in var
+                                ]
+                        else:
+                            # No frontmatter - use current logic (backward compatible)
+                            prompt_name = md_file.stem
+                            content_body = content
+
+                            # Extract title from first line or filename
+                            lines = content.strip().split('\n')
+                            title = lines[0].lstrip('#').strip() if lines and lines[0].startswith('#') else md_file.stem
+                            description = title
+
+                            # Find variables in content
+                            try:
+                                variables = list(set(re.findall(r'\{([^}]+)\}', content)))
+                            except re.error as e:
+                                logger.error(f"Regex error in file {md_file}: {e}")
+                                variables = []
+
+                            arguments = [
                                 {
                                     'name': var,
                                     'description': f'Value for {var}',
                                     'required': True
                                 }
-                                for var in variables if var.isalnum() or '_' in var  # Basic validation
+                                for var in variables if var.isalnum() or '_' in var
                             ]
+
+                        # Handle duplicate prompt names
+                        if prompt_name in prompts:
+                            logger.warning(f"Duplicate prompt name '{prompt_name}' found in {md_file}, skipping")
+                            continue
+
+                        prompts[prompt_name] = {
+                            'name': prompt_name,
+                            'description': description[:200],  # Limit description length
+                            'content': content_body,  # Store body content without frontmatter
+                            'file_path': str(md_file),
+                            'variables': variables,
+                            'arguments': arguments
                         }
                         
                     except PermissionError:

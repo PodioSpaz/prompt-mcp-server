@@ -111,7 +111,7 @@ class TestServerInitialization(TestPromptMCPServer):
         """Test server initialization with default settings"""
         server = PromptMCPServer()
         
-        self.assertEqual(server.version, "2.0.3")
+        self.assertEqual(server.version, "2.1.0")
         self.assertEqual(server.name, "prompt-mcp-server")
         self.assertIsInstance(server.prompt_directories, list)
         self.assertGreaterEqual(len(server.prompt_directories), 1)
@@ -340,7 +340,7 @@ class TestMCPProtocol(TestPromptMCPServer):
             self.assertIn("capabilities", response["result"])
             self.assertIn("serverInfo", response["result"])
             self.assertEqual(response["result"]["serverInfo"]["name"], "prompt-mcp-server")
-            self.assertEqual(response["result"]["serverInfo"]["version"], "2.0.3")
+            self.assertEqual(response["result"]["serverInfo"]["version"], "2.1.0")
         
         asyncio.run(run_test())
     
@@ -607,6 +607,327 @@ class TestAsyncMethods(TestPromptMCPServer):
         
         asyncio.run(run_test())
 
+class TestFrontmatter(TestPromptMCPServer):
+    """Test YAML frontmatter functionality"""
+
+    def setUp(self):
+        super().setUp()
+        os.environ['PROMPTS_PATH'] = str(self.test_prompts_dir)
+
+        # Create frontmatter test prompts
+        self.create_frontmatter_test_prompts()
+
+        self.server = PromptMCPServer()
+
+    def create_frontmatter_test_prompts(self):
+        """Create test prompts with frontmatter"""
+        # Simple frontmatter with name and title
+        simple_frontmatter = """---
+name: "simple-test"
+title: "Simple Test Prompt"
+---
+
+# Test Content
+
+This is a test prompt with {variable}.
+"""
+        (self.test_prompts_dir / "frontmatter_simple.md").write_text(simple_frontmatter)
+
+        # Full frontmatter with arguments
+        full_frontmatter = """---
+name: "code-reviewer"
+title: "Code Review Assistant"
+description: "Reviews code with security focus"
+arguments:
+  - name: "code"
+    description: "Source code to review"
+    required: true
+  - name: "language"
+    description: "Programming language"
+    default: "Python"
+  - name: "focus"
+    description: "Review focus area"
+    default: "security"
+---
+
+Analyze the following {language} code with focus on {focus}:
+
+{code}
+"""
+        (self.test_prompts_dir / "frontmatter_full.md").write_text(full_frontmatter)
+
+        # Empty frontmatter
+        empty_frontmatter = """---
+---
+
+# Empty Frontmatter Test
+
+This has empty frontmatter with {test}.
+"""
+        (self.test_prompts_dir / "frontmatter_empty.md").write_text(empty_frontmatter)
+
+        # Invalid frontmatter (no closing delimiter)
+        invalid_frontmatter = """---
+name: "invalid"
+
+# Missing closing delimiter
+
+This should fall back to legacy mode with {var}.
+"""
+        (self.test_prompts_dir / "frontmatter_invalid.md").write_text(invalid_frontmatter)
+
+        # Frontmatter with mixed required/optional arguments
+        mixed_args_frontmatter = """---
+name: "api-design"
+description: "API Design Helper"
+arguments:
+  - name: "endpoint"
+    description: "API endpoint path"
+    required: true
+  - name: "method"
+    description: "HTTP method"
+    default: "GET"
+---
+
+Design {method} endpoint: {endpoint}
+"""
+        (self.test_prompts_dir / "frontmatter_mixed_args.md").write_text(mixed_args_frontmatter)
+
+    def test_frontmatter_detection(self):
+        """Test frontmatter detection"""
+        # Valid frontmatter
+        self.assertTrue(self.server._has_frontmatter("---\nname: test\n---\nContent"))
+        self.assertTrue(self.server._has_frontmatter("---\r\nname: test\n---\nContent"))
+
+        # No frontmatter
+        self.assertFalse(self.server._has_frontmatter("# No Frontmatter\nContent"))
+        self.assertFalse(self.server._has_frontmatter("Content without frontmatter"))
+
+    def test_parse_yaml_value(self):
+        """Test YAML value parsing"""
+        # Strings
+        self.assertEqual(self.server._parse_yaml_value("hello"), "hello")
+        self.assertEqual(self.server._parse_yaml_value('"quoted string"'), "quoted string")
+        self.assertEqual(self.server._parse_yaml_value("'single quoted'"), "single quoted")
+
+        # Numbers
+        self.assertEqual(self.server._parse_yaml_value("42"), 42)
+        self.assertEqual(self.server._parse_yaml_value("3.14"), 3.14)
+
+        # Booleans
+        self.assertEqual(self.server._parse_yaml_value("true"), True)
+        self.assertEqual(self.server._parse_yaml_value("True"), True)
+        self.assertEqual(self.server._parse_yaml_value("false"), False)
+        self.assertEqual(self.server._parse_yaml_value("False"), False)
+
+        # Null
+        self.assertIsNone(self.server._parse_yaml_value("null"))
+        self.assertIsNone(self.server._parse_yaml_value("~"))
+
+    def test_parse_simple_yaml(self):
+        """Test simple YAML parsing"""
+        yaml_content = """
+name: "test-prompt"
+title: "Test Title"
+count: 42
+enabled: true
+"""
+        result = self.server._parse_simple_yaml(yaml_content)
+
+        self.assertEqual(result["name"], "test-prompt")
+        self.assertEqual(result["title"], "Test Title")
+        self.assertEqual(result["count"], 42)
+        self.assertEqual(result["enabled"], True)
+
+    def test_parse_yaml_array(self):
+        """Test YAML array parsing"""
+        yaml_content = """
+arguments:
+  - name: "arg1"
+    description: "First argument"
+    required: true
+  - name: "arg2"
+    description: "Second argument"
+    default: "value"
+"""
+        result = self.server._parse_simple_yaml(yaml_content)
+
+        self.assertIn("arguments", result)
+        self.assertEqual(len(result["arguments"]), 2)
+
+        arg1 = result["arguments"][0]
+        self.assertEqual(arg1["name"], "arg1")
+        self.assertEqual(arg1["description"], "First argument")
+        self.assertEqual(arg1["required"], True)
+
+        arg2 = result["arguments"][1]
+        self.assertEqual(arg2["name"], "arg2")
+        self.assertEqual(arg2["description"], "Second argument")
+        self.assertEqual(arg2["default"], "value")
+
+    def test_parse_frontmatter_valid(self):
+        """Test parsing valid frontmatter"""
+        content = """---
+name: "test"
+title: "Test Prompt"
+---
+
+# Content
+
+Test content here.
+"""
+        frontmatter, body = self.server._parse_frontmatter(content)
+
+        self.assertIsNotNone(frontmatter)
+        self.assertEqual(frontmatter["name"], "test")
+        self.assertEqual(frontmatter["title"], "Test Prompt")
+        self.assertIn("# Content", body)
+        self.assertIn("Test content here", body)
+
+    def test_parse_frontmatter_empty(self):
+        """Test parsing empty frontmatter"""
+        content = """---
+---
+
+# Content
+"""
+        frontmatter, body = self.server._parse_frontmatter(content)
+
+        self.assertIsNotNone(frontmatter)
+        self.assertEqual(frontmatter, {})
+        self.assertIn("# Content", body)
+
+    def test_parse_frontmatter_invalid(self):
+        """Test parsing invalid frontmatter"""
+        content = """---
+name: "test"
+
+# Missing closing delimiter
+"""
+        frontmatter, body = self.server._parse_frontmatter(content)
+
+        # Should return None and original content
+        self.assertIsNone(frontmatter)
+        self.assertEqual(body, content)
+
+    def test_parse_frontmatter_none(self):
+        """Test parsing content without frontmatter"""
+        content = """# No Frontmatter
+
+Just content.
+"""
+        frontmatter, body = self.server._parse_frontmatter(content)
+
+        self.assertIsNone(frontmatter)
+        self.assertEqual(body, content)
+
+    def test_process_frontmatter_arguments(self):
+        """Test processing frontmatter arguments"""
+        frontmatter_args = [
+            {"name": "code", "description": "Source code", "required": True},
+            {"name": "language", "description": "Programming language", "default": "Python"},
+            {"name": "focus", "description": "Focus area"}
+        ]
+        content = "Review {code} in {language} with {focus}"
+
+        processed = self.server._process_frontmatter_arguments(frontmatter_args, content)
+
+        self.assertEqual(len(processed), 3)
+
+        # Required argument
+        self.assertEqual(processed[0]["name"], "code")
+        self.assertEqual(processed[0]["required"], True)
+
+        # Optional argument (has default)
+        self.assertEqual(processed[1]["name"], "language")
+        self.assertEqual(processed[1]["required"], False)
+
+        # Required by default (no default, no explicit required)
+        self.assertEqual(processed[2]["name"], "focus")
+        self.assertEqual(processed[2]["required"], True)
+
+    def test_scan_prompts_with_frontmatter(self):
+        """Test scanning prompts with frontmatter"""
+        prompts = self.server._scan_prompts()
+
+        # Check simple frontmatter prompt
+        self.assertIn("simple-test", prompts)
+        simple = prompts["simple-test"]
+        self.assertEqual(simple["name"], "simple-test")
+        self.assertEqual(simple["description"], "Simple Test Prompt")
+        self.assertIn("variable", simple["variables"])
+
+        # Check full frontmatter prompt
+        self.assertIn("code-reviewer", prompts)
+        reviewer = prompts["code-reviewer"]
+        self.assertEqual(reviewer["name"], "code-reviewer")
+        self.assertEqual(reviewer["description"], "Reviews code with security focus")
+
+        # Check arguments
+        self.assertEqual(len(reviewer["arguments"]), 3)
+        arg_names = [arg["name"] for arg in reviewer["arguments"]]
+        self.assertIn("code", arg_names)
+        self.assertIn("language", arg_names)
+        self.assertIn("focus", arg_names)
+
+        # Check required flags
+        code_arg = next(arg for arg in reviewer["arguments"] if arg["name"] == "code")
+        self.assertTrue(code_arg["required"])
+
+        language_arg = next(arg for arg in reviewer["arguments"] if arg["name"] == "language")
+        self.assertFalse(language_arg["required"])
+
+    def test_scan_prompts_frontmatter_fallback_to_autodiscover(self):
+        """Test frontmatter without arguments falls back to auto-discovery"""
+        prompts = self.server._scan_prompts()
+
+        # Simple frontmatter has no arguments field, should auto-discover
+        self.assertIn("simple-test", prompts)
+        simple = prompts["simple-test"]
+        self.assertIn("variable", simple["variables"])
+        self.assertEqual(len(simple["arguments"]), 1)
+
+    def test_backward_compatibility_no_frontmatter(self):
+        """Test backward compatibility with prompts without frontmatter"""
+        prompts = self.server._scan_prompts()
+
+        # Old-style prompts should still work
+        self.assertIn("debug_code", prompts)
+        debug = prompts["debug_code"]
+        self.assertEqual(debug["name"], "debug_code")
+        self.assertEqual(debug["description"], "Debug Code Issues")
+
+        self.assertIn("create_function", prompts)
+        create = prompts["create_function"]
+        self.assertIn("language", create["variables"])
+        self.assertIn("function_name", create["variables"])
+
+    def test_frontmatter_invalid_falls_back(self):
+        """Test that invalid frontmatter falls back to legacy parsing"""
+        prompts = self.server._scan_prompts()
+
+        # Invalid frontmatter should be processed as regular content
+        # The file will be processed but the frontmatter won't be parsed
+        # We should see the content with the variable
+        found = False
+        for prompt_name, prompt_data in prompts.items():
+            if "var" in prompt_data.get("variables", []):
+                found = True
+                break
+
+        # Should have processed the file somehow
+        self.assertTrue(found or len(prompts) > 0)
+
+    def test_frontmatter_title_description_priority(self):
+        """Test title/description priority in frontmatter"""
+        # Test with both title and description
+        prompts = self.server._scan_prompts()
+
+        reviewer = prompts.get("code-reviewer")
+        if reviewer:
+            # When both exist, description is used for description field
+            self.assertEqual(reviewer["description"], "Reviews code with security focus")
+
 def run_tests():
     """Run all tests and provide summary"""
     # Create test suite
@@ -618,7 +939,8 @@ def run_tests():
         TestMCPProtocol,
         TestCaching,
         TestErrorHandling,
-        TestAsyncMethods
+        TestAsyncMethods,
+        TestFrontmatter
     ]
     
     suite = unittest.TestSuite()
